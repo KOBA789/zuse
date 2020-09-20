@@ -2,10 +2,11 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
   entry: {
-    app: "./js/index.ts",
+    app: ["./js/index.ts", "./js/style.css"],
   },
   plugins: [
     new CleanWebpackPlugin(),
@@ -16,6 +17,7 @@ module.exports = {
       crateDirectory: path.resolve(__dirname, "./rs/"),
       outDir: path.resolve(__dirname, "./rs/pkg"),
     }),
+    new MiniCssExtractPlugin(),
   ],
   module: {
     rules: [
@@ -27,6 +29,14 @@ module.exports = {
           options: {
             cacheDirectory: true
           },
+        },
+      },
+      {
+        test: /\.(eot|ttf|woff|woff2|svg|png|gif|jpe?g)$/,
+        loader: "file-loader",
+        options: {
+            name: "[name].[ext]?[hash]",
+            outputPath: "assets/",
         },
       },
     ],

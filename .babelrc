@@ -1,6 +1,15 @@
 {
   "presets": [
     ["@babel/preset-env", { "targets": "last 2 Chrome versions, last 2 Firefox versions" }],
-    "@babel/preset-typescript"
+    "@babel/preset-typescript",
+    "@babel/preset-react"
+  ],
+  "plugins": [
+    ["module-resolver", {
+      "root": ["./js"],
+      "alias": {
+        "~": "./js"
+      }
+    }]
   ]
 }
