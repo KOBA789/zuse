@@ -11,6 +11,7 @@ parser: "@typescript-eslint/parser"
 plugins:
   - "@typescript-eslint"
   - "react-hooks"
+  - "emotion"
 parserOptions:
   sourceType: module
 settings:
@@ -25,3 +26,5 @@ rules:
   react/prop-types: "off"
   react-hooks/rules-of-hooks: "error"
   react-hooks/exhaustive-deps: "warn"
+  emotion/jsx-import: "error"
+  emotion/no-vanilla: "error"
