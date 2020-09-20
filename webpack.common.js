@@ -1,8 +1,10 @@
+/*eslint-env node*/
+
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
   entry: {
@@ -27,7 +29,7 @@ module.exports = {
         use: {
           loader: "babel-loader",
           options: {
-            cacheDirectory: true
+            cacheDirectory: true,
           },
         },
       },
@@ -35,8 +37,8 @@ module.exports = {
         test: /\.(eot|ttf|woff|woff2|svg|png|gif|jpe?g)$/,
         loader: "file-loader",
         options: {
-            name: "[name].[ext]?[hash]",
-            outputPath: "assets/",
+          name: "[name].[ext]?[hash]",
+          outputPath: "assets/",
         },
       },
     ],

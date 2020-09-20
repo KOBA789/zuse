@@ -1,3 +1,5 @@
+/*eslint-env node*/
+
 const path = require("path");
 const { merge } = require("webpack-merge");
 const common = require("./webpack.common.js");
@@ -14,7 +16,7 @@ module.exports = merge(common, {
         test: /\.css$/i,
         use: ["style-loader", "css-loader"],
       },
-    ]
+    ],
   },
   output: {
     filename: "[name].bundle.js",

@@ -11,5 +11,4 @@ async function main() {
   await import("../rs/pkg");
 }
 
-main()
-  .catch(console.error);
+main().catch(console.error);
