@@ -31,5 +31,5 @@ version = "0.1.7"
 features = ['web-sys']
 
 [dependencies.glow]
-version = "0.6"
+version = "0.4.0"
 features = ['web-sys']
