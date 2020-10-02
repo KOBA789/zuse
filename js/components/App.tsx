@@ -6,10 +6,14 @@ import {
   Alignment,
   Button,
   Colors,
+  FocusStyleManager,
   Navbar,
   NavbarGroup,
 } from "@blueprintjs/core";
 import { IconNames } from "@blueprintjs/icons";
+import { ZsCad } from "./ZsCad";
+
+FocusStyleManager.onlyShowFocusOnTabs();
 
 const sidePaneStyle = css`
   background-color: ${Colors.WHITE};
@@ -21,7 +25,7 @@ const SidePane: React.FC = ({ children }) => (
 );
 
 const mainPaneStyle = css`
-  flex: 1 0 auto;
+  flex: 1 1 auto;
 `;
 const MainPane: React.FC = ({ children }) => (
   <div css={mainPaneStyle}>{children}</div>
@@ -62,7 +66,9 @@ export const App: React.FC = () => {
         </NavbarGroup>
       </Navbar>
       <SideBySide>
-        <MainPane />
+        <MainPane>
+          <ZsCad />
+        </MainPane>
         <SidePane />
       </SideBySide>
     </div>

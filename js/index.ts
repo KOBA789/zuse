@@ -8,8 +8,6 @@ async function main() {
   document.body.appendChild(root);
 
   ReactDOM.render(React.createElement(App), root);
-
-  await import("../rs/pkg");
 }
 
 main().catch(console.error);
