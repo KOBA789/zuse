@@ -1,16 +1,27 @@
-
+use wasm_bindgen::prelude::*;
 use golem::Dimension::*;
 use golem::*;
-use super::zs_cad::DrawList;
+use super::cad::DrawList;
 
-pub struct ZsCadGolemBackend {
+#[wasm_bindgen]
+pub struct GolemBackend {
     golem_ctx: Context,
     shader: ShaderProgram,
     vb: VertexBuffer,
     eb: ElementBuffer,
 }
 
-impl ZsCadGolemBackend {
+#[wasm_bindgen]
+impl GolemBackend {
+    #[wasm_bindgen(constructor)]
+    pub fn from_webgl(webgl_context: web_sys::WebGlRenderingContext) -> Self {
+        let glow_context = glow::Context::from_webgl1_context(webgl_context);
+        let golem_context = golem::Context::from_glow(glow_context).unwrap();
+        GolemBackend::new(golem_context).unwrap()
+    }
+}
+
+impl GolemBackend {
     pub fn new(golem_ctx: Context) -> Result<Self, GolemError> {
         let mut shader = ShaderProgram::new(
             &golem_ctx,

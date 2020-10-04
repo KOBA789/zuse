@@ -12,6 +12,8 @@ serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { version = "0.2.68", features = ["serde-serialize"] }
 js-sys = "0.3.45"
 nalgebra = "0.22"
+rstar = "0.8"
+itertools = "0.9"
 
 [dependencies.web-sys]
 version = "0.3.45"
@@ -34,3 +36,7 @@ features = ['web-sys']
 [dependencies.glow]
 version = "0.4.0"
 features = ['web-sys']
+
+[profile.dev]
+opt-level = 1
+dwarf-debug-info = true
