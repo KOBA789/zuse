@@ -322,12 +322,12 @@ impl State {
         }
     }
 
-    pub fn wires_iter(&self) -> impl Iterator<Item = &Line<[i32; 2]>> {
-        self.wires.iter()
+    pub fn wires_iter(&self, aabb: &AABB<[i32; 2]>) -> impl Iterator<Item = &Line<[i32; 2]>> {
+        self.wires.locate_in_envelope_intersecting(aabb)
     }
 
-    pub fn junctions_iter<'a>(&'a self) -> impl Iterator<Item = [i32; 2]> + 'a {
-        self.junctions.rtree.iter().filter_map(|p| {
+    pub fn junctions_iter<'a>(&'a self, aabb: &AABB<[i32; 2]>) -> impl Iterator<Item = [i32; 2]> + 'a {
+        self.junctions.rtree.locate_in_envelope_intersecting(aabb).filter_map(|p| {
             if p.data >= 3 {
                 Some(*p.position())
             } else {

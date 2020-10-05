@@ -182,7 +182,7 @@ impl Cad {
         self.draw_grid();
     }
 
-    fn is_in_frame(&self, top_left: Vector2<f32>, bottom_right: Vector2<f32>) -> bool {
+    fn is_in_screen(&self, top_left: Vector2<f32>, bottom_right: Vector2<f32>) -> bool {
         let frame_size: Vector2<f32> = nalgebra::convert(self.draw_list.frame_size);
         let frame_center = frame_size.scale(0.5);
         let target_size = bottom_right - top_left;
@@ -191,6 +191,13 @@ impl Cad {
         let size = frame_size + target_size;
 
         diff.x <= size.x && diff.y <= size.y
+    }
+
+    fn model_bound(&self) -> (Vector2<i32>, Vector2<i32>) {
+        let top_left = self.screen_to_model(Vector2::zeros()).map(|f| f.floor() as i32);
+        let frame_size: Vector2<f32> = nalgebra::convert(self.draw_list.frame_size);
+        let bottom_right = self.screen_to_model(frame_size).map(|f| f.ceil() as i32);
+        (top_left, bottom_right)
     }
 
     fn screen_to_model(&self, screen: Vector2<f32>) -> Vector2<f32> {
@@ -215,7 +222,6 @@ impl Cad {
                 let grayscale = 0.8;
                 let col = Color::new(grayscale, grayscale, grayscale, 1.);
                 self.draw_list.add_square(p, 2.0, col);
-                //self.draw_list.add_circle(p, 2.0, Color::new(0., 0., 0., 1.),2.0);
             }
         }
     }
@@ -240,10 +246,12 @@ impl Cad {
 
     fn draw_schematic(&mut self) {
         let sch_state = std::mem::take(&mut self.sch_state);
-        for wire in sch_state.wires_iter() {
+        let (top_left, right_bottom) = self.model_bound();
+        let aabb = rstar::AABB::from_corners(top_left.into(), right_bottom.into());
+        for wire in sch_state.wires_iter(&aabb) {
             self.wire(Vector2::new(wire.from[0], wire.from[1]), Vector2::new(wire.to[0], wire.to[1]));
         }
-        for junction in sch_state.junctions_iter() {
+        for junction in sch_state.junctions_iter(&aabb) {
             self.junction(Vector2::new(junction[0], junction[1]));
         }
         self.sch_state = sch_state;
@@ -256,10 +264,8 @@ impl Cad {
         let half_thickness = Vector2::new(thickness, thickness).scale(0.5);
         let top_left = p1 - half_thickness;
         let bottom_right = p2 + half_thickness;
-        if self.is_in_frame(top_left, bottom_right) {
-            let col = Color::new(0., 132. / 255., 0., 1.);
-            self.draw_list.add_line(p1, p2, col, thickness);
-        }
+        let col = Color::new(0., 132. / 255., 0., 1.);
+        self.draw_list.add_line(p1, p2, col, thickness);
     }
 
     fn junction(&mut self, s: Vector2<i32>) {
@@ -268,10 +274,8 @@ impl Cad {
         let half_thickness = Vector2::new(thickness, thickness).scale(0.5);
         let top_left = p - half_thickness;
         let bottom_right = p + half_thickness;
-        if self.is_in_frame(top_left, bottom_right) {
-            let col = Color::new(0., 132. / 255., 0., 1.);
-            self.draw_list.add_line(p, p, col, thickness);
-        }
+        let col = Color::new(0., 132. / 255., 0., 1.);
+        self.draw_list.add_line(p, p, col, thickness);
     }
 
     fn draw_wiring(&mut self, wiring: &Wiring) {
