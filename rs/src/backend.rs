@@ -60,15 +60,20 @@ impl GolemBackend {
     }
 
     pub fn draw(&mut self, draw_list: &DrawList) -> Result<(), GolemError> {
-        let l = 0.0;
-        let r = draw_list.frame_size.x as f32;
-        let t = 0.0;
-        let b = draw_list.frame_size.y as f32;
+        let w = draw_list.screen_size.x as f32;
+        let h = draw_list.screen_size.y as f32;
+        let grid = draw_list.grid_size;
+        let zoom = draw_list.zoom;
+        let pan = draw_list.pan;
+        let sx = (2. / w) * zoom * grid;
+        let sy = (2. / h) * zoom * grid;
+        let npx = 2. * pan.x / w + 1. / w;
+        let npy = -2. * pan.y / h + 1. / h;
         let projection = UniformValue::Matrix4([
-            2.0 / (r - l), 0.0, 0.0, 0.0,
-            0.0, 2.0 / (t - b), 0.0, 0.0,
-            0.0, 0.0, -1.0, 0.0,
-            (r + l) / (l - r), (t + b) / (b - t), 0.0, 1.0,
+            sx, 0., 0., 0.,
+            0., -sy, 0., 0.,
+            0., 0., -1., 0.,
+            npx - 1., npy + 1., 0., 1.,
         ]);
         let vertices = draw_list.vertices();
         let indices = draw_list.indices();
@@ -76,7 +81,7 @@ impl GolemBackend {
         self.eb.set_data(&indices);
         self.shader.prepare_draw(&self.vb, &self.eb)?;
         self.shader.set_uniform("projection", projection)?;
-        self.golem_ctx.set_viewport(0, 0, draw_list.frame_size.x, draw_list.frame_size.y);
+        self.golem_ctx.set_viewport(0, 0, draw_list.screen_size.x, draw_list.screen_size.y);
         self.golem_ctx.set_clear_color(draw_list.bg_color.x, draw_list.bg_color.y, draw_list.bg_color.z, draw_list.bg_color.w);
         self.golem_ctx.clear();
         unsafe {

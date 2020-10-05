@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct Io {
+    pub(crate) screen_size: Vector2<u32>,
     pub(crate) mouse: Vector2<f32>,
     pub(crate) wheel: Vector2<f32>,
     pub(crate) wheel_pinch: f32,
@@ -25,6 +26,7 @@ impl Io {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
+            screen_size: Vector2::new(1, 1),
             mouse: Vector2::zeros(),
             wheel: Vector2::zeros(),
             wheel_pinch: 0.0,
@@ -102,9 +104,9 @@ impl Io {
         self.events.push(Event::DoubleClick(button));
     }
 
-    pub fn set_wheel_delta(&mut self, x: f32, y: f32, pinch: f32) {
-        self.wheel = Vector2::new(x, y);
-        self.wheel_pinch = pinch;
+    #[wasm_bindgen(js_name = setScreenSize)]
+    pub fn set_screen_size(&mut self, x: u32, y: u32) {
+        self.screen_size = Vector2::new(x, y);
     }
 
     pub fn reset(&mut self) {

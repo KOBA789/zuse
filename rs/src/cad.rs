@@ -12,14 +12,10 @@ pub use io::Io;
 pub struct Cad {
     backend: GolemBackend,
     draw_list: DrawList,
-    pan: Vector2<f32>,
-    zoom: f32,
     cursor: Vector2<i32>,
     tool_state: ToolState,
     sch_state: schematic::State,
 }
-
-const GRID_SIZE: f32 = 16.0;
 
 enum ToolState {
     Selection,
@@ -90,12 +86,20 @@ impl Cad {
         Self {
             backend,
             draw_list,
-            pan: Vector2::zeros(),
-            zoom: 1.,
             cursor: Vector2::zeros(),
             tool_state: ToolState::Selection,
             sch_state: schematic::State::default(),
         }
+    }
+
+    #[inline]
+    fn zoom(&self) -> f32 {
+        self.draw_list.zoom
+    }
+
+    #[inline]
+    fn pan(&self) -> Vector2<f32> {
+        self.draw_list.pan
     }
 
     fn process_pan_zoom(&mut self, io: &Io) {
@@ -106,13 +110,13 @@ impl Cad {
             let mouse_inv_mat =
                 Matrix3::new(1., 0., -io.mouse.x, 0., 1., -io.mouse.y, 0., 0., 1.);
             let current_mat = Matrix3::new(
-                self.zoom, 0., self.pan.x, 0., self.zoom, self.pan.y, 0., 0., 1.,
+                self.zoom(), 0., self.pan().x, 0., self.zoom(), self.pan().y, 0., 0., 1.,
             );
             let next_mat = mouse_mat * scale_mat * mouse_inv_mat * current_mat;
-            self.zoom = next_mat.m11;
-            self.pan = Vector2::new(next_mat.m13, next_mat.m23);
+            self.draw_list.zoom = next_mat.m11;
+            self.draw_list.pan = Vector2::new(next_mat.m13, next_mat.m23);
         }
-        self.pan -= io.wheel;
+        self.draw_list.pan -= io.wheel;
     }
 
     fn process_cursor(&mut self, io: &Io) {
@@ -174,73 +178,57 @@ impl Cad {
     }
 
     pub fn new_frame(&mut self, io: &mut Io) {
+        self.draw_list.screen_size = io.screen_size;
         self.process_pan_zoom(&io);
         self.process_cursor(&io);
         self.process_events(&io);
         io.reset();
         self.draw_list.clear();
-        self.draw_grid();
-    }
-
-    fn is_in_screen(&self, top_left: Vector2<f32>, bottom_right: Vector2<f32>) -> bool {
-        let frame_size: Vector2<f32> = nalgebra::convert(self.draw_list.frame_size);
-        let frame_center = frame_size.scale(0.5);
-        let target_size = bottom_right - top_left;
-        let target_center = (top_left + bottom_right).scale(0.5);
-        let diff = (frame_center - target_center).abs();
-        let size = frame_size + target_size;
-
-        diff.x <= size.x && diff.y <= size.y
     }
 
     fn model_bound(&self) -> (Vector2<i32>, Vector2<i32>) {
         let top_left = self.screen_to_model(Vector2::zeros()).map(|f| f.floor() as i32);
-        let frame_size: Vector2<f32> = nalgebra::convert(self.draw_list.frame_size);
+        let frame_size: Vector2<f32> = nalgebra::convert(self.draw_list.screen_size);
         let bottom_right = self.screen_to_model(frame_size).map(|f| f.ceil() as i32);
         (top_left, bottom_right)
     }
 
     fn screen_to_model(&self, screen: Vector2<f32>) -> Vector2<f32> {
-        (screen - self.pan).unscale(GRID_SIZE * self.zoom)
+        (screen - self.pan()).unscale(self.draw_list.grid_size * self.zoom())
     }
 
     fn model_to_screen(&self, model: Vector2<f32>) -> Vector2<f32> {
-        model.scale(GRID_SIZE * self.zoom) + self.pan
+        model.scale(self.draw_list.grid_size * self.zoom()) + self.pan()
     }
 
     fn draw_grid(&mut self) {
-        let mut zoom = self.zoom;
-        while zoom < 1.0 {
-            zoom *= 10.0;
-        }
-        let grid_unit = GRID_SIZE * zoom;
-        let grid_start = self.pan.map(|x| x % grid_unit);
-        for y in 0..(self.draw_list.frame_size.y as f32 / grid_unit).floor() as usize {
-            for x in 0..(self.draw_list.frame_size.x as f32 / grid_unit).floor() as usize {
-                let offset = Vector2::new(x as f32, y as f32).scale(grid_unit);
-                let p = grid_start + offset;
-                let grayscale = 0.8;
-                let col = Color::new(grayscale, grayscale, grayscale, 1.);
-                self.draw_list.add_square(p, 2.0, col);
+        let two_px_in_model = 2.0 / self.zoom();
+        let grayscale = 0.8;
+        let col = Color::new(grayscale, grayscale, grayscale, 1.);
+        let (top_left, bottom_right) = self.model_bound();
+        for y in top_left.y..bottom_right.y {
+            for x in top_left.x..bottom_right.x {
+                self.draw_list.add_square(Vector2::new(x as f32, y as f32), two_px_in_model, col);
             }
         }
     }
 
     fn draw_cursor(&mut self) {
-        let p = self.model_to_screen(nalgebra::convert(self.cursor));
+        let p: Vector2<f32> = nalgebra::convert(self.cursor);
         let col = Color::new(0., 0., 0., 1.);
-        let half_size = GRID_SIZE * 2.;
+        let one_px_in_mil = 1.0 / self.zoom();
+        let half_len = 0.75 / self.zoom();
         self.draw_list.add_line(
-            Vector2::new(p.x - half_size, p.y),
-            Vector2::new(p.x + half_size, p.y),
+            Vector2::new(p.x - half_len, p.y),
+            Vector2::new(p.x + half_len, p.y),
             col,
-            1.0,
+            one_px_in_mil,
         );
         self.draw_list.add_line(
-            Vector2::new(p.x, p.y - half_size),
-            Vector2::new(p.x, p.y + half_size),
+            Vector2::new(p.x, p.y - half_len),
+            Vector2::new(p.x, p.y + half_len),
             col,
-            1.0,
+            one_px_in_mil,
         );
     }
 
@@ -257,23 +245,17 @@ impl Cad {
         self.sch_state = sch_state;
     }
 
-    fn wire(&mut self, s1: Vector2<i32>, s2: Vector2<i32>) {
-        let p1 = nalgebra::convert::<_, Vector2<f32>>(s1).scale(GRID_SIZE * self.zoom) + self.pan;
-        let p2 = nalgebra::convert::<_, Vector2<f32>>(s2).scale(GRID_SIZE * self.zoom) + self.pan;
-        let thickness = (3.0 * self.zoom).max(1.0);
-        let half_thickness = Vector2::new(thickness, thickness).scale(0.5);
-        let top_left = p1 - half_thickness;
-        let bottom_right = p2 + half_thickness;
+    fn wire(&mut self, p1: Vector2<i32>, p2: Vector2<i32>) {
+        let p1 = nalgebra::convert(p1);
+        let p2 = nalgebra::convert(p2);
+        let thickness = 6.;
         let col = Color::new(0., 132. / 255., 0., 1.);
         self.draw_list.add_line(p1, p2, col, thickness);
     }
 
-    fn junction(&mut self, s: Vector2<i32>) {
-        let p = nalgebra::convert::<_, Vector2<f32>>(s).scale(GRID_SIZE * self.zoom) + self.pan;
-        let thickness = 12.0 * self.zoom;
-        let half_thickness = Vector2::new(thickness, thickness).scale(0.5);
-        let top_left = p - half_thickness;
-        let bottom_right = p + half_thickness;
+    fn junction(&mut self, p: Vector2<i32>) {
+        let p = nalgebra::convert(p);
+        let thickness = 40.;
         let col = Color::new(0., 132. / 255., 0., 1.);
         self.draw_list.add_line(p, p, col, thickness);
     }
@@ -309,23 +291,18 @@ impl Cad {
     }
 
     pub fn draw(&mut self) {
+        self.draw_grid();
         self.draw_schematic();
         let state = std::mem::replace(&mut self.tool_state, ToolState::Selection);
         match &state {
             ToolState::Wiring(wiring) => {
                 self.draw_wiring(&wiring);
-                self.draw_cursor();
             },
-            ToolState::ReadyToWire => {
-                self.draw_cursor();
-            },
+            ToolState::ReadyToWire => {},
             ToolState::Selection => {},
         }
+        self.draw_cursor();
         self.tool_state = state;
         self.backend.draw(&self.draw_list).unwrap();
-    }
-
-    pub fn set_frame_size(&mut self, w: u32, h: u32) {
-        self.draw_list.frame_size = Vector2::new(w, h);
     }
 }

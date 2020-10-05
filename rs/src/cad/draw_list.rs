@@ -4,7 +4,10 @@ pub type Color = Vector4<f32>;
 
 #[derive(Debug, Clone)]
 pub struct DrawList {
-    pub frame_size: Vector2<u32>,
+    pub screen_size: Vector2<u32>,
+    pub pan: Vector2<f32>,
+    pub zoom: f32,
+    pub grid_size: f32,
     pub bg_color: Color,
     cmds: Vec<DrawCmd>,
     idx_buffer: Vec<u32>,
@@ -12,9 +15,12 @@ pub struct DrawList {
 }
 
 impl DrawList {
-    pub fn new(frame_size: Vector2<u32>) -> Self {
+    pub fn new(screen_size: Vector2<u32>) -> Self {
         Self {
-            frame_size,
+            screen_size,
+            pan: Vector2::zeros(),
+            zoom: 1.,
+            grid_size: 50.,
             bg_color: Color::new(1., 1., 1., 1.),
             cmds: vec![DrawCmd::default()],
             idx_buffer: vec![],
@@ -48,16 +54,17 @@ impl DrawList {
     }
 
     pub fn add_line(&mut self, p1: Vector2<f32>, p2: Vector2<f32>, col: Color, thickness: f32) {
-        let cap_segment_count = if thickness <= 1.0 {
+        let resolution = thickness * self.zoom;
+        let cap_segment_count = if resolution <= 1.0 {
             0
         } else {
-            (thickness * 1.5).ceil() as usize
+            (resolution * 1.5).ceil() as usize
         };
         let vtx_count = 4 + cap_segment_count;
         let idx_count = (2 + cap_segment_count) * 3;
         self.reserve(idx_count, vtx_count);
 
-        let half_thickness = thickness * 0.5;
+        let half_thickness = thickness / self.grid_size * 0.5;
         let mut d = p2 - p1;
         d.try_normalize_mut(0.);
         d.scale_mut(half_thickness);
@@ -104,8 +111,9 @@ impl DrawList {
     }
 
     pub fn add_circle(&mut self, p: Vector2<f32>, r: f32, col: Color, thickness: f32) {
-        let half_thickness = thickness * 0.5;
-        let segment_count = ((r + half_thickness) * 0.5).ceil() as usize;
+        let resolution = thickness * self.zoom;
+        let half_thickness = thickness / self.grid_size * 0.5;
+        let segment_count = ((r + resolution) * 0.5).ceil() as usize;
         let vtx_count = 2 * segment_count;
         let idx_count = (2 * segment_count) * 3;
         self.reserve(idx_count, vtx_count);
@@ -140,7 +148,7 @@ impl DrawList {
 
     #[allow(clippy::many_single_char_names)]
     pub fn add_square(&mut self, p: Vector2<f32>, size: f32, col: Color) {
-        let half_size = size * 0.5;
+        let half_size = size / self.grid_size * 0.5;
         self.reserve(6, 4);
         let a = self.push_vert(Vert {
             pos: p + Vector2::new(-half_size, -half_size),
