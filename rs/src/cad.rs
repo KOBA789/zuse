@@ -1,7 +1,7 @@
 mod draw_list;
 mod io;
 
-use nalgebra::{Matrix3, Vector2};
+use nalgebra::Vector2;
 use wasm_bindgen::prelude::*;
 use super::schematic;
 use super::backend::GolemBackend;
@@ -11,6 +11,8 @@ pub use io::Io;
 #[wasm_bindgen]
 pub struct Cad {
     backend: GolemBackend,
+    transform: Transform,
+    grid_size: f32,
     draw_list: DrawList,
     cursor: Vector2<i32>,
     tool_state: ToolState,
@@ -69,6 +71,44 @@ impl Wiring {
     }
 }
 
+struct Transform {
+    scale: f32,
+    translate: Vector2<f32>,
+    screen_size: Vector2<u32>,
+}
+
+impl Transform {
+    fn pan_zoom(&mut self, pan: Vector2<f32>, origin: Vector2<f32>, zoom: f32) {
+        self.translate = self.translate.scale(zoom) - origin.scale(zoom) + origin + pan;
+        self.scale *= zoom;
+    }
+
+    fn screen_to_world(&self, screen: Vector2<f32>) -> Vector2<f32> {
+        (screen - self.translate).unscale(self.scale)
+    }
+
+    fn world_to_screen(&self, world: Vector2<f32>) -> Vector2<f32> {
+        world.scale(self.scale) + self.translate
+    }
+
+    fn viewbox(&self) -> (Vector2<f32>, Vector2<f32>) {
+        let top_left = self.screen_to_world(Vector2::zeros());
+        let frame_size: Vector2<f32> = nalgebra::convert(self.screen_size);
+        let bottom_right = self.screen_to_world(frame_size);
+        (top_left, bottom_right)
+    }
+}
+
+impl Default for Transform {
+    fn default() -> Self {
+        Self {
+            scale: 1.,
+            translate: Vector2::zeros(),
+            screen_size: Vector2::new(1, 1),
+        }
+    }
+}
+
 #[inline]
 fn ord(v1: i32, v2: i32) -> (i32, i32) {
     if v1 <= v2 {
@@ -85,6 +125,8 @@ impl Cad {
         let draw_list = DrawList::new(Vector2::new(0, 0));
         Self {
             backend,
+            transform: Transform::default(),
+            grid_size: 50.,
             draw_list,
             cursor: Vector2::zeros(),
             tool_state: ToolState::Selection,
@@ -92,35 +134,23 @@ impl Cad {
         }
     }
 
-    #[inline]
-    fn zoom(&self) -> f32 {
-        self.draw_list.zoom
-    }
-
-    #[inline]
-    fn pan(&self) -> Vector2<f32> {
-        self.draw_list.pan
-    }
-
     fn process_pan_zoom(&mut self, io: &Io) {
-        if io.wheel_pinch != 0.0 {
-            let scale = 1. - io.wheel_pinch * 0.02;
-            let mouse_mat = Matrix3::new(1., 0., io.mouse.x, 0., 1., io.mouse.y, 0., 0., 1.);
-            let scale_mat = Matrix3::new(scale, 0., 0., 0., scale, 0., 0., 0., 1.);
-            let mouse_inv_mat =
-                Matrix3::new(1., 0., -io.mouse.x, 0., 1., -io.mouse.y, 0., 0., 1.);
-            let current_mat = Matrix3::new(
-                self.zoom(), 0., self.pan().x, 0., self.zoom(), self.pan().y, 0., 0., 1.,
-            );
-            let next_mat = mouse_mat * scale_mat * mouse_inv_mat * current_mat;
-            self.draw_list.zoom = next_mat.m11;
-            self.draw_list.pan = Vector2::new(next_mat.m13, next_mat.m23);
+        let pan = -io.wheel;
+        let origin = io.mouse;
+        let mut zoom = 1. - io.wheel_pinch * 0.02;
+        if self.transform.scale * zoom < 0.1 {
+            zoom = 0.1 / self.transform.scale;
+        } else if self.transform.scale * zoom > 16.0 {
+            zoom = 16.0 / self.transform.scale;
         }
-        self.draw_list.pan -= io.wheel;
+        self.transform.pan_zoom(pan, origin, zoom);
     }
 
     fn process_cursor(&mut self, io: &Io) {
-        self.cursor = self.screen_to_model(io.mouse).map(|x| x.round() as i32);
+        let w = self.transform.screen_to_world(io.mouse);
+        let g = self.world_to_grid(w);
+        let rounded = g.map(|f| f.round() as i32);
+        self.cursor = rounded;
     }
 
     fn process_event(&mut self, event: &io::Event) {
@@ -178,86 +208,100 @@ impl Cad {
     }
 
     pub fn new_frame(&mut self, io: &mut Io) {
-        self.draw_list.screen_size = io.screen_size;
+        self.transform.screen_size = io.screen_size;
         self.process_pan_zoom(&io);
         self.process_cursor(&io);
         self.process_events(&io);
         io.reset();
         self.draw_list.clear();
-    }
-
-    fn model_bound(&self) -> (Vector2<i32>, Vector2<i32>) {
-        let top_left = self.screen_to_model(Vector2::zeros()).map(|f| f.floor() as i32);
-        let frame_size: Vector2<f32> = nalgebra::convert(self.draw_list.screen_size);
-        let bottom_right = self.screen_to_model(frame_size).map(|f| f.ceil() as i32);
-        (top_left, bottom_right)
-    }
-
-    fn screen_to_model(&self, screen: Vector2<f32>) -> Vector2<f32> {
-        (screen - self.pan()).unscale(self.draw_list.grid_size * self.zoom())
-    }
-
-    fn model_to_screen(&self, model: Vector2<f32>) -> Vector2<f32> {
-        model.scale(self.draw_list.grid_size * self.zoom()) + self.pan()
+        self.draw_list.scale = self.transform.scale;
+        self.draw_list.translate = self.transform.translate;
+        self.draw_list.screen_size = self.transform.screen_size;
     }
 
     fn draw_grid(&mut self) {
-        let two_px_in_model = 2.0 / self.zoom();
-        let grayscale = 0.8;
-        let col = Color::new(grayscale, grayscale, grayscale, 1.);
-        let (top_left, bottom_right) = self.model_bound();
-        for y in top_left.y..bottom_right.y {
-            for x in top_left.x..bottom_right.x {
-                self.draw_list.add_square(Vector2::new(x as f32, y as f32), two_px_in_model, col);
+        let size = 2.0 / self.transform.scale;
+        let base_gray = 0.7;
+        let (top_left, bottom_right) = self.grid_viewbox();
+        let mut step = 1;
+        let mut ofs_x = 0;
+        let mut ofs_y = 0;
+        if self.transform.scale < 0.3 {
+            step = 10;
+            ofs_x = top_left.x % step;
+            ofs_y = top_left.y % step;
+        }
+        for y in (top_left.y - ofs_y..bottom_right.y).step_by(step as usize) {
+            let y_bold = if y % (10 * step) == 0 { 0.2 } else { 0.0 };
+            for x in (top_left.x - ofs_x..bottom_right.x).step_by(step as usize) {
+                let x_bold = if x % (10 * step) == 0 { 0.2 } else { 0.0 };
+                let p = self.grid_to_world(Vector2::new(x, y));
+                let rgb = base_gray - y_bold - x_bold;
+                let col = Color::new(rgb, rgb, rgb, 1.);
+                self.draw_list.add_square(p, size, col);
             }
         }
     }
 
     fn draw_cursor(&mut self) {
-        let p: Vector2<f32> = nalgebra::convert(self.cursor);
+        let p = self.grid_to_world(self.cursor);
         let col = Color::new(0., 0., 0., 1.);
-        let one_px_in_mil = 1.0 / self.zoom();
-        let half_len = 0.75 / self.zoom();
+        let thickness = 1.0 / self.transform.scale;
+        let half_len = 35. / self.transform.scale;
         self.draw_list.add_line(
             Vector2::new(p.x - half_len, p.y),
             Vector2::new(p.x + half_len, p.y),
             col,
-            one_px_in_mil,
+            thickness,
         );
         self.draw_list.add_line(
             Vector2::new(p.x, p.y - half_len),
             Vector2::new(p.x, p.y + half_len),
             col,
-            one_px_in_mil,
+            thickness,
         );
     }
 
     fn draw_schematic(&mut self) {
         let sch_state = std::mem::take(&mut self.sch_state);
-        let (top_left, right_bottom) = self.model_bound();
+        let (top_left, right_bottom) = self.grid_viewbox();
         let aabb = rstar::AABB::from_corners(top_left.into(), right_bottom.into());
         for wire in sch_state.wires_iter(&aabb) {
-            self.wire(Vector2::new(wire.from[0], wire.from[1]), Vector2::new(wire.to[0], wire.to[1]));
+            self.wire(wire.from.into(), wire.to.into());
         }
         for junction in sch_state.junctions_iter(&aabb) {
-            self.junction(Vector2::new(junction[0], junction[1]));
+            self.junction(junction.into());
         }
         self.sch_state = sch_state;
     }
 
+    fn world_to_grid(&self, p: Vector2<f32>) -> Vector2<f32> {
+        p.unscale(self.grid_size)
+    }
+
+    fn grid_to_world(&self, p: Vector2<i32>) -> Vector2<f32> {
+        let p: Vector2<f32> = nalgebra::convert(p);
+        p.scale(self.grid_size)
+    }
+
+    fn grid_viewbox(&self) -> (Vector2<i32>, Vector2<i32>) {
+        let (a, b) = self.transform.viewbox();
+        let a = a.unscale(self.grid_size).map(|n| n as i32);
+        let b = b.unscale(self.grid_size).map(|n| n as i32);
+        (a, b)
+    }
+
     fn wire(&mut self, p1: Vector2<i32>, p2: Vector2<i32>) {
-        let p1 = nalgebra::convert(p1);
-        let p2 = nalgebra::convert(p2);
-        let thickness = 6.;
+        let p1 = self.grid_to_world(p1);
+        let p2 = self.grid_to_world(p2);
         let col = Color::new(0., 132. / 255., 0., 1.);
-        self.draw_list.add_line(p1, p2, col, thickness);
+        self.draw_list.add_line(p1, p2, col, 6.);
     }
 
     fn junction(&mut self, p: Vector2<i32>) {
-        let p = nalgebra::convert(p);
-        let thickness = 40.;
+        let p = self.grid_to_world(p);
         let col = Color::new(0., 132. / 255., 0., 1.);
-        self.draw_list.add_line(p, p, col, thickness);
+        self.draw_list.add_line(p, p, col, 40.);
     }
 
     fn draw_wiring(&mut self, wiring: &Wiring) {

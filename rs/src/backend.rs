@@ -62,13 +62,12 @@ impl GolemBackend {
     pub fn draw(&mut self, draw_list: &DrawList) -> Result<(), GolemError> {
         let w = draw_list.screen_size.x as f32;
         let h = draw_list.screen_size.y as f32;
-        let grid = draw_list.grid_size;
-        let zoom = draw_list.zoom;
-        let pan = draw_list.pan;
-        let sx = (2. / w) * zoom * grid;
-        let sy = (2. / h) * zoom * grid;
-        let npx = 2. * pan.x / w + 1. / w;
-        let npy = -2. * pan.y / h + 1. / h;
+        let scale = draw_list.scale;
+        let translate = draw_list.translate;
+        let sx = (2. / w) * scale;
+        let sy = (2. / h) * scale;
+        let npx = 2. * translate.x / w + 1. / w;
+        let npy = -2. * translate.y / h + 1. / h;
         let projection = UniformValue::Matrix4([
             sx, 0., 0., 0.,
             0., -sy, 0., 0.,

@@ -5,9 +5,8 @@ pub type Color = Vector4<f32>;
 #[derive(Debug, Clone)]
 pub struct DrawList {
     pub screen_size: Vector2<u32>,
-    pub pan: Vector2<f32>,
-    pub zoom: f32,
-    pub grid_size: f32,
+    pub translate: Vector2<f32>,
+    pub scale: f32,
     pub bg_color: Color,
     cmds: Vec<DrawCmd>,
     idx_buffer: Vec<u32>,
@@ -18,9 +17,8 @@ impl DrawList {
     pub fn new(screen_size: Vector2<u32>) -> Self {
         Self {
             screen_size,
-            pan: Vector2::zeros(),
-            zoom: 1.,
-            grid_size: 50.,
+            translate: Vector2::zeros(),
+            scale: 1.,
             bg_color: Color::new(1., 1., 1., 1.),
             cmds: vec![DrawCmd::default()],
             idx_buffer: vec![],
@@ -53,8 +51,60 @@ impl DrawList {
         self.cmds.last_mut().unwrap().num_of_elems += 1;
     }
 
+    pub fn add_line_with_params(
+        &mut self,
+        p1: Vector2<f32>,
+        p2: Vector2<f32>,
+        col: Color,
+        params: &LineParams,
+    ) {
+        self.reserve(params.idx_count(), params.vtx_count());
+
+        let mut d = p2 - p1;
+        d.try_normalize_mut(0.);
+        d.scale_mut(params.half_thickness);
+
+        let v0 = self.push_vert(Vert {
+            pos: Vector2::new(p1.x + d.y, p1.y - d.x),
+            col,
+        });
+        let v1 = self.push_vert(Vert {
+            pos: Vector2::new(p2.x + d.y, p2.y - d.x),
+            col,
+        });
+        let v2 = self.push_vert(Vert {
+            pos: Vector2::new(p2.x - d.y, p2.y + d.x),
+            col,
+        });
+        let v3 = self.push_vert(Vert {
+            pos: Vector2::new(p1.x - d.y, p1.y + d.x),
+            col,
+        });
+        self.push_elem(v0, v1, v2);
+        self.push_elem(v0, v2, v3);
+
+        if !params.cap_segments.is_empty() {
+            let mut v_t = v1;
+            let mut v_b = v3;
+            let horizon = Vector2::new(-d.y, d.x);
+            for r in params.cap_segments.iter() {
+                if r.perp(&horizon) < 0. {
+                    let v = self.push_vert(Vert { pos: p1 + r, col });
+                    self.push_elem(v0, v_b, v);
+                    v_b = v;
+                    v_t = v1;
+                } else {
+                    let v = self.push_vert(Vert { pos: p2 + r, col });
+                    self.push_elem(v_t, v2, v);
+                    v_t = v;
+                    v_b = v3;
+                }
+            }
+        }
+    }
+
     pub fn add_line(&mut self, p1: Vector2<f32>, p2: Vector2<f32>, col: Color, thickness: f32) {
-        let resolution = thickness * self.zoom;
+        let resolution = thickness * self.scale;
         let cap_segment_count = if resolution <= 1.0 {
             0
         } else {
@@ -64,7 +114,7 @@ impl DrawList {
         let idx_count = (2 + cap_segment_count) * 3;
         self.reserve(idx_count, vtx_count);
 
-        let half_thickness = thickness / self.grid_size * 0.5;
+        let half_thickness = thickness * 0.5;
         let mut d = p2 - p1;
         d.try_normalize_mut(0.);
         d.scale_mut(half_thickness);
@@ -111,8 +161,8 @@ impl DrawList {
     }
 
     pub fn add_circle(&mut self, p: Vector2<f32>, r: f32, col: Color, thickness: f32) {
-        let resolution = thickness * self.zoom;
-        let half_thickness = thickness / self.grid_size * 0.5;
+        let resolution = thickness * self.scale;
+        let half_thickness = thickness * 0.5;
         let segment_count = ((r + resolution) * 0.5).ceil() as usize;
         let vtx_count = 2 * segment_count;
         let idx_count = (2 * segment_count) * 3;
@@ -148,7 +198,7 @@ impl DrawList {
 
     #[allow(clippy::many_single_char_names)]
     pub fn add_square(&mut self, p: Vector2<f32>, size: f32, col: Color) {
-        let half_size = size / self.grid_size * 0.5;
+        let half_size = size * 0.5;
         self.reserve(6, 4);
         let a = self.push_vert(Vert {
             pos: p + Vector2::new(-half_size, -half_size),
@@ -184,6 +234,41 @@ impl DrawList {
 
     pub fn indices(&self) -> &[u32] {
         &self.idx_buffer
+    }
+}
+
+pub struct LineParams {
+    half_thickness: f32,
+    cap_segments: Vec<Vector2<f32>>,
+}
+
+impl LineParams {
+    pub fn new(scale: f32, thickness: f32) -> Self {
+        let resolution = thickness * scale;
+        let cap_segment_count = if resolution <= 1.0 {
+            0
+        } else {
+            (resolution * 1.5).ceil() as usize
+        };
+        let half_thickness = thickness * 0.5;
+        let cap_segments = (0..=cap_segment_count)
+            .map(|i| {
+                let rad = i as f32 * 2.0 / cap_segment_count as f32 * std::f32::consts::PI;
+                Vector2::new(rad.cos(), rad.sin()).scale(half_thickness)
+            })
+            .collect();
+        Self {
+            half_thickness,
+            cap_segments,
+        }
+    }
+
+    fn vtx_count(&self) -> usize {
+        4 + self.cap_segments.len()
+    }
+
+    fn idx_count(&self) -> usize {
+        (2 + self.cap_segments.len()) * 3
     }
 }
 
