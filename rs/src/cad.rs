@@ -160,112 +160,166 @@ impl Cad {
         self.cursor = snapped;
     }
 
-    fn process_event(&mut self, event: &io::Event) {
-        match &mut self.tool_state {
-            ToolState::Selection => match event {
-                io::Event::Keydown(key) if key == "w" => {
-                    self.tool_state = ToolState::Wiring(Wiring::start(self.cursor));
-                }
-                io::Event::Keydown(key) if key == "d" => {
+    fn process_event_tool_selection(&mut self, event: &io::Event) -> (bool, Option<ToolState>) {
+        match event {
+            io::Event::Keydown(key) => match key.as_str() {
+                "w" => (false, Some(ToolState::Wiring(Wiring::start(self.cursor)))),
+                "p" => (
+                    false,
+                    Some(ToolState::PlacingComponent(
+                        symbol::Kind::Power,
+                        Default::default(),
+                    )),
+                ),
+                "s" => (
+                    false,
+                    Some(ToolState::PlacingComponent(
+                        symbol::Kind::Contact,
+                        Default::default(),
+                    )),
+                ),
+                "c" => (
+                    false,
+                    Some(ToolState::PlacingComponent(
+                        symbol::Kind::Coil,
+                        Default::default(),
+                    )),
+                ),
+                "d" => {
                     self.sch_state
                         .delete_at_point(self.pointer.into(), self.grid_size as i32 / 4);
+                    (false, None)
                 }
-                io::Event::Keydown(key) if key == "p" => {
-                    self.tool_state = ToolState::PlacingComponent(symbol::Kind::Power, Default::default());
+                "r" => {
+                    self.sch_state
+                        .rotate_component_at_point(self.pointer, self.grid_size as i32 / 4);
+                    (false, None)
                 }
-                io::Event::Keydown(key) if key == "s" => {
-                    self.tool_state = ToolState::PlacingComponent(symbol::Kind::Contact, Default::default());
+                "y" => {
+                    self.sch_state
+                        .mirror_component_at_point(self.pointer, self.grid_size as i32 / 4);
+                    (false, None)
                 }
-                io::Event::Keydown(key) if key == "c" => {
-                    self.tool_state = ToolState::PlacingComponent(symbol::Kind::Coil, Default::default());
-                }
-                io::Event::Keydown(key) if key == "r" => {
-                    self.sch_state.rotate_component_at_point(self.pointer, self.grid_size as i32 / 4);
-                }
-                io::Event::Keydown(key) if key == "m" => {
-                    self.sch_state.mirror_component_at_point(self.pointer, self.grid_size as i32 / 4);
-                }
-                _ => {}
+                _ => (true, None),
             },
-            ToolState::ReadyToWire => match event {
-                io::Event::Click(0) => {
-                    self.tool_state = ToolState::Wiring(Wiring::start(self.cursor));
-                }
-                io::Event::Keydown(key) if key == "Escape" => {
-                    self.tool_state = ToolState::Selection;
-                }
-                _ => {}
-            },
-            ToolState::Wiring(wiring) => match event {
-                io::Event::Keydown(key) if key == "w" => {
-                    wiring.add_segment(self.cursor);
-                }
-                io::Event::Click(0) => {
-                    wiring.add_segment(self.cursor);
-                }
-                io::Event::DoubleClick(0) => {
-                    for wire in &wiring.segments {
-                        match wire {
-                            Wire::H(wire_h) => {
-                                self.sch_state.add_wire(wire_h.clone());
-                            }
-                            Wire::V(wire_v) => {
-                                self.sch_state.add_wire(wire_v.clone());
-                            }
+            _ => (true, None),
+        }
+    }
+
+    fn process_event_tool_ready_to_wire(&mut self, event: &io::Event) -> (bool, Option<ToolState>) {
+        match event {
+            io::Event::Click(0) => (false, Some(ToolState::Wiring(Wiring::start(self.cursor)))),
+            _ => (true, None),
+        }
+    }
+
+    fn process_event_tool_wiring(
+        &mut self,
+        event: &io::Event,
+        wiring: &mut Wiring,
+    ) -> (bool, Option<ToolState>) {
+        match event {
+            io::Event::Keydown(key) if key == "w" => {
+                wiring.add_segment(self.cursor);
+                (false, None)
+            }
+            io::Event::Click(0) => {
+                wiring.add_segment(self.cursor);
+                (false, None)
+            }
+            io::Event::DoubleClick(0) => {
+                for wire in &wiring.segments {
+                    match wire {
+                        Wire::H(wire_h) => {
+                            self.sch_state.add_wire(wire_h.clone());
+                        }
+                        Wire::V(wire_v) => {
+                            self.sch_state.add_wire(wire_v.clone());
                         }
                     }
-                    self.tool_state = ToolState::ReadyToWire;
                 }
-                io::Event::Keydown(key) if key == "Escape" => {
-                    self.tool_state = ToolState::Selection;
-                }
-                _ => {}
-            },
-            ToolState::PlacingComponent(symbol, rot_mirror) => match event {
-                io::Event::Click(0) => {
-                    match symbol {
-                        symbol::Kind::Power => {
-                            let power = schematic::Component::new(
-                                self.cursor,
-                                symbol::Kind::Power,
-                                *rot_mirror,
-                            );
-                            self.sch_state.add_component(power);
-                        }
-                        symbol::Kind::Contact => {
-                            let contact = schematic::Component::new(
-                                self.cursor,
-                                symbol::Kind::Contact,
-                                *rot_mirror,
-                            );
-                            self.sch_state.add_component(contact);
-                        }
-                        symbol::Kind::Coil => {
-                            let coil = schematic::Component::new(
-                                self.cursor,
-                                symbol::Kind::Coil,
-                                *rot_mirror,
-                            );
-                            self.sch_state.add_component(coil);
-                        }
+                (false, Some(ToolState::ReadyToWire))
+            }
+            _ => (true, None),
+        }
+    }
+
+    fn process_event_tool_placing_component(
+        &mut self,
+        event: &io::Event,
+        symbol: &mut symbol::Kind,
+        rot_mirror: &mut schematic::RotMirror,
+    ) -> (bool, Option<ToolState>) {
+        match event {
+            io::Event::Click(0) => {
+                match symbol {
+                    symbol::Kind::Power => {
+                        let power = schematic::Component::new(
+                            self.cursor,
+                            symbol::Kind::Power,
+                            *rot_mirror,
+                        );
+                        self.sch_state.add_component(power);
                     }
-                    self.tool_state = ToolState::Selection;
-                }
-                io::Event::Keydown(key) if key == "r" => {
-                    if symbol.can_rotate() {
-                        *rot_mirror = rot_mirror.rotate_r();
+                    symbol::Kind::Contact => {
+                        let contact = schematic::Component::new(
+                            self.cursor,
+                            symbol::Kind::Contact,
+                            *rot_mirror,
+                        );
+                        self.sch_state.add_component(contact);
+                    }
+                    symbol::Kind::Coil => {
+                        let coil =
+                            schematic::Component::new(self.cursor, symbol::Kind::Coil, *rot_mirror);
+                        self.sch_state.add_component(coil);
                     }
                 }
-                io::Event::Keydown(key) if key == "m" => {
-                    if symbol.can_mirror() {
-                        *rot_mirror = rot_mirror.mirror();
-                    }
+                (false, Some(ToolState::Selection))
+            }
+            io::Event::Keydown(key) if key == "r" => {
+                if symbol.can_rotate() {
+                    *rot_mirror = rot_mirror.rotate_r();
                 }
-                io::Event::Keydown(key) if key == "Escape" => {
-                    self.tool_state = ToolState::Selection;
+                (false, None)
+            }
+            io::Event::Keydown(key) if key == "m" => {
+                if symbol.can_mirror() {
+                    *rot_mirror = rot_mirror.mirror();
                 }
-                _ => {}
-            },
+                (false, None)
+            }
+            _ => (true, None),
+        }
+    }
+
+    fn process_event_tool(&mut self, event: &io::Event) -> bool {
+        let mut tool_state = std::mem::replace(&mut self.tool_state, ToolState::Selection);
+        let (prevent_default, next_state) = match &mut tool_state {
+            ToolState::Selection => self.process_event_tool_selection(event),
+            ToolState::ReadyToWire => self.process_event_tool_ready_to_wire(event),
+            ToolState::Wiring(wiring) => self.process_event_tool_wiring(event, wiring),
+            ToolState::PlacingComponent(symbol, rot_mirror) => {
+                self.process_event_tool_placing_component(event, symbol, rot_mirror)
+            }
+        };
+        if let Some(next_state) = next_state {
+            self.tool_state = next_state;
+        } else {
+            self.tool_state = tool_state;
+        }
+        prevent_default
+    }
+
+    fn process_event(&mut self, event: &io::Event) {
+        if !self.process_event_tool(event) {
+            return;
+        }
+        match event {
+            io::Event::Keydown(key) if key == "Escape" => {
+                self.tool_state = ToolState::Selection;
+            }
+            _ => {}
         }
     }
 
