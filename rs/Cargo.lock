@@ -575,6 +575,7 @@ dependencies = [
  "golem",
  "itertools",
  "js-sys",
+ "lazy_static",
  "nalgebra",
  "rstar",
  "serde",

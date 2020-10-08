@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use golem::Dimension::*;
+use golem::{Dimension::*, blend::BlendChannel, blend::BlendEquation, blend::BlendFactor, blend::BlendFunction, blend::BlendInput, blend::BlendMode, blend::BlendOperation};
 use golem::*;
 use super::cad::DrawList;
 
@@ -23,6 +23,23 @@ impl GolemBackend {
 
 impl GolemBackend {
     pub fn new(golem_ctx: Context) -> Result<Self, GolemError> {
+        let blend_mode = BlendMode {
+            equation: BlendEquation::Same(BlendOperation::Add),
+            function: BlendFunction::Same {
+                source: BlendFactor::Color {
+                    input: BlendInput::Source,
+                    channel: BlendChannel::Alpha,
+                    is_inverse: false,
+                },
+                destination: BlendFactor::Color {
+                    input: BlendInput::Source,
+                    channel: BlendChannel::Alpha,
+                    is_inverse: true,
+                },
+            },
+            global_color: [0.0; 4]
+        };
+        golem_ctx.set_blend_mode(Some(blend_mode));
         let mut shader = ShaderProgram::new(
             &golem_ctx,
             ShaderDescription {
@@ -83,8 +100,12 @@ impl GolemBackend {
         self.golem_ctx.set_viewport(0, 0, draw_list.screen_size.x, draw_list.screen_size.y);
         self.golem_ctx.set_clear_color(draw_list.bg_color.x, draw_list.bg_color.y, draw_list.bg_color.z, draw_list.bg_color.w);
         self.golem_ctx.clear();
-        unsafe {
-            self.shader.draw_prepared(0..indices.len(), GeometryMode::Triangles);
+        for cmd in &draw_list.cmds {
+            unsafe {
+                let start  = cmd.idx_offset;
+                let end = start + cmd.num_of_elems * 3;
+                self.shader.draw_prepared(start..end, GeometryMode::Triangles);
+            }
         }
         Ok(())
     }

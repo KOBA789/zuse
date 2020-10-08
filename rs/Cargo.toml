@@ -14,6 +14,7 @@ js-sys = "0.3.45"
 nalgebra = "0.22"
 rstar = "0.8"
 itertools = "0.9"
+lazy_static = "1.4"
 
 [dependencies.web-sys]
 version = "0.3.45"

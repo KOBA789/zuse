@@ -8,7 +8,7 @@ pub struct DrawList {
     pub translate: Vector2<f32>,
     pub scale: f32,
     pub bg_color: Color,
-    cmds: Vec<DrawCmd>,
+    pub cmds: Vec<DrawCmd>,
     idx_buffer: Vec<u32>,
     vtx_buffer: Vec<Vert>,
 }
@@ -31,6 +31,14 @@ impl DrawList {
         self.cmds.push(DrawCmd::default());
         self.idx_buffer.clear();
         self.vtx_buffer.clear();
+    }
+
+    pub fn new_layer(&mut self) {
+        self.cmds.push(DrawCmd {
+            idx_offset: self.idx_buffer.len(),
+            vtx_offset: self.vtx_buffer.len(),
+            num_of_elems: 0,
+        });
     }
 
     fn reserve(&mut self, idx_count: usize, vtx_count: usize) {
@@ -163,7 +171,7 @@ impl DrawList {
     pub fn add_circle(&mut self, p: Vector2<f32>, r: f32, col: Color, thickness: f32) {
         let resolution = thickness * self.scale;
         let half_thickness = thickness * 0.5;
-        let segment_count = ((r + resolution) * 0.5).ceil() as usize;
+        let segment_count = (r + resolution).ceil() as usize;
         let vtx_count = 2 * segment_count;
         let idx_count = (2 * segment_count) * 3;
         self.reserve(idx_count, vtx_count);
@@ -283,9 +291,9 @@ pub struct Vert {
 #[derive(Debug, Clone)]
 pub struct DrawCmd {
     //clip_rect: Vector4<f32>,
-    vtx_offset: usize,
-    idx_offset: usize,
-    num_of_elems: usize,
+    pub vtx_offset: usize,
+    pub idx_offset: usize,
+    pub num_of_elems: usize,
 }
 
 impl Default for DrawCmd {
