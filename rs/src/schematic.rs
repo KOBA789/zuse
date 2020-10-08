@@ -364,41 +364,8 @@ impl State {
         }
     }
 
-    pub fn delete_at_point(&mut self, p: [i32; 2], size: i32) {
-        let aabb = AABB::from_corners([p[0] - size, p[1] - size], [p[0] + size, p[1] + size]);
-        let wires_to_delete = self
-            .wires
-            .locate_in_envelope_intersecting(&aabb)
-            .cloned()
-            .collect::<Vec<_>>();
-        let mut diry_junctions = vec![];
-        for wire in wires_to_delete {
-            self.wires.remove(&wire);
-            let rc = self.junctions.decr_by(wire.from, 1);
-            if rc == 2 {
-                diry_junctions.push(wire.from);
-            }
-            let rc = self.junctions.decr_by(wire.to, 1);
-            if rc == 2 {
-                diry_junctions.push(wire.to);
-            }
-        }
-        let components_to_delete = self
-            .components
-            .locate_in_envelope_intersecting(&aabb)
-            .cloned()
-            .collect::<Vec<_>>();
-        for component in components_to_delete {
-            for pad in component.pads() {
-                let p = pad.position.into();
-                self.components.remove(&component);
-                let rc = self.junctions.decr_by(p, 1);
-                if rc == 2 {
-                    diry_junctions.push(p);
-                }
-            }
-        }
-        for junction in diry_junctions {
+    fn normalize_wires(&mut self, dirty_junctions: &[[i32; 2]]) {
+        for &junction in dirty_junctions {
             let (wires_h, wires_v): (Vec<_>, Vec<_>) = self
                 .wires
                 .locate_in_envelope_intersecting(&AABB::from_point(junction))
@@ -425,6 +392,85 @@ impl State {
                 }
                 _ => {}
             }
+        }
+    }
+
+    pub fn delete_at_point(&mut self, p: [i32; 2], size: i32) {
+        let aabb = AABB::from_corners([p[0] - size, p[1] - size], [p[0] + size, p[1] + size]);
+        let wires_to_delete = self
+            .wires
+            .locate_in_envelope_intersecting(&aabb)
+            .cloned()
+            .collect::<Vec<_>>();
+        let mut dirty_junctions = vec![];
+        for wire in wires_to_delete {
+            self.wires.remove(&wire);
+            let rc = self.junctions.decr_by(wire.from, 1);
+            if rc == 2 {
+                dirty_junctions.push(wire.from);
+            }
+            let rc = self.junctions.decr_by(wire.to, 1);
+            if rc == 2 {
+                dirty_junctions.push(wire.to);
+            }
+        }
+        let components_to_delete = self
+            .components
+            .locate_in_envelope_intersecting(&aabb)
+            .cloned()
+            .collect::<Vec<_>>();
+        for component in components_to_delete {
+            self.delete_component(&component, &mut dirty_junctions);
+        }
+        self.normalize_wires(&dirty_junctions);
+    }
+
+    fn delete_component(&mut self, component: &Component, dirty_junctions: &mut Vec<[i32; 2]>) {
+        self.components.remove(&component);
+        for pad in component.pads() {
+            let p = pad.position.into();
+            let rc = self.junctions.decr_by(p, 1);
+            if rc == 2 {
+                dirty_junctions.push(p);
+            }
+        }
+    }
+
+    pub fn rotate_component_at_point(&mut self, p: Vector2<i32>, size: i32) {
+        let aabb = AABB::from_corners([p[0] - size, p[1] - size], [p[0] + size, p[1] + size]);
+        let components_to_be_rotated = self
+            .components
+            .locate_in_envelope_intersecting(&aabb)
+            .filter(|c| c.symbol.can_rotate())
+            .cloned()
+            .collect::<Vec<_>>();
+        let mut dirty_junctions = vec![];
+        for component in &components_to_be_rotated {
+            self.delete_component(component, &mut dirty_junctions);
+        }
+        self.normalize_wires(&dirty_junctions);
+        for component in components_to_be_rotated {
+            let rotated_component = component.rot_mirror(component.rot_mirror.rotate_r());
+            self.add_component(rotated_component);
+        }
+    }
+
+    pub fn mirror_component_at_point(&mut self, p: Vector2<i32>, size: i32) {
+        let aabb = AABB::from_corners([p[0] - size, p[1] - size], [p[0] + size, p[1] + size]);
+        let components_to_be_rotated = self
+            .components
+            .locate_in_envelope_intersecting(&aabb)
+            .filter(|c| c.symbol.can_mirror())
+            .cloned()
+            .collect::<Vec<_>>();
+        let mut dirty_junctions = vec![];
+        for component in &components_to_be_rotated {
+            self.delete_component(component, &mut dirty_junctions);
+        }
+        self.normalize_wires(&dirty_junctions);
+        for component in components_to_be_rotated {
+            let rotated_component = component.rot_mirror(component.rot_mirror.mirror());
+            self.add_component(rotated_component);
         }
     }
 

@@ -26,7 +26,7 @@ enum ToolState {
     Selection,
     ReadyToWire,
     Wiring(Wiring),
-    PlacingComponent(symbol::Kind),
+    PlacingComponent(symbol::Kind, schematic::RotMirror),
 }
 
 enum Wire {
@@ -171,13 +171,19 @@ impl Cad {
                         .delete_at_point(self.pointer.into(), self.grid_size as i32 / 4);
                 }
                 io::Event::Keydown(key) if key == "p" => {
-                    self.tool_state = ToolState::PlacingComponent(symbol::Kind::Power);
+                    self.tool_state = ToolState::PlacingComponent(symbol::Kind::Power, Default::default());
                 }
                 io::Event::Keydown(key) if key == "s" => {
-                    self.tool_state = ToolState::PlacingComponent(symbol::Kind::Contact);
+                    self.tool_state = ToolState::PlacingComponent(symbol::Kind::Contact, Default::default());
                 }
                 io::Event::Keydown(key) if key == "c" => {
-                    self.tool_state = ToolState::PlacingComponent(symbol::Kind::Coil);
+                    self.tool_state = ToolState::PlacingComponent(symbol::Kind::Coil, Default::default());
+                }
+                io::Event::Keydown(key) if key == "r" => {
+                    self.sch_state.rotate_component_at_point(self.pointer, self.grid_size as i32 / 4);
+                }
+                io::Event::Keydown(key) if key == "m" => {
+                    self.sch_state.mirror_component_at_point(self.pointer, self.grid_size as i32 / 4);
                 }
                 _ => {}
             },
@@ -215,14 +221,14 @@ impl Cad {
                 }
                 _ => {}
             },
-            ToolState::PlacingComponent(symbol) => match event {
+            ToolState::PlacingComponent(symbol, rot_mirror) => match event {
                 io::Event::Click(0) => {
                     match symbol {
                         symbol::Kind::Power => {
                             let power = schematic::Component::new(
                                 self.cursor,
                                 symbol::Kind::Power,
-                                Default::default(),
+                                *rot_mirror,
                             );
                             self.sch_state.add_component(power);
                         }
@@ -230,7 +236,7 @@ impl Cad {
                             let contact = schematic::Component::new(
                                 self.cursor,
                                 symbol::Kind::Contact,
-                                Default::default(),
+                                *rot_mirror,
                             );
                             self.sch_state.add_component(contact);
                         }
@@ -238,12 +244,22 @@ impl Cad {
                             let coil = schematic::Component::new(
                                 self.cursor,
                                 symbol::Kind::Coil,
-                                Default::default(),
+                                *rot_mirror,
                             );
                             self.sch_state.add_component(coil);
                         }
                     }
                     self.tool_state = ToolState::Selection;
+                }
+                io::Event::Keydown(key) if key == "r" => {
+                    if symbol.can_rotate() {
+                        *rot_mirror = rot_mirror.rotate_r();
+                    }
+                }
+                io::Event::Keydown(key) if key == "m" => {
+                    if symbol.can_mirror() {
+                        *rot_mirror = rot_mirror.mirror();
+                    }
                 }
                 io::Event::Keydown(key) if key == "Escape" => {
                     self.tool_state = ToolState::Selection;
@@ -427,8 +443,7 @@ impl Cad {
         }
     }
 
-    fn draw_placing_component(&mut self, symbol: symbol::Kind) {
-        let rot_mirror = Default::default();
+    fn draw_placing_component(&mut self, symbol: symbol::Kind, rot_mirror: schematic::RotMirror) {
         let position = self.cursor;
         let col = Color::new(0.51, 0., 0., 0.5);
         match symbol {
@@ -466,9 +481,9 @@ impl Cad {
                 self.draw_cursor();
             }
             ToolState::Selection => {}
-            ToolState::PlacingComponent(symbol) => {
+            ToolState::PlacingComponent(symbol, rot_mirror) => {
                 self.draw_list.new_layer();
-                self.draw_placing_component(*symbol);
+                self.draw_placing_component(*symbol, *rot_mirror);
                 self.draw_cursor();
             }
         }

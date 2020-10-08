@@ -26,6 +26,22 @@ impl Kind {
             Kind::Coil => &coil::PADS,
         }
     }
+
+    pub fn can_rotate(self) -> bool {
+        match self {
+            Kind::Power => false,
+            Kind::Contact => true,
+            Kind::Coil => false,
+        }
+    }
+
+    pub fn can_mirror(self) -> bool {
+        match self {
+            Kind::Power => false,
+            Kind::Contact => true,
+            Kind::Coil => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
