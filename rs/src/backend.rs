@@ -6,6 +6,7 @@ use super::cad::DrawList;
 #[wasm_bindgen]
 pub struct GolemBackend {
     golem_ctx: Context,
+    tex: Texture,
     shader: ShaderProgram,
     vb: VertexBuffer,
     eb: ElementBuffer,
@@ -39,29 +40,32 @@ impl GolemBackend {
             },
             global_color: [0.0; 4]
         };
+        let mut tex = Texture::new(&golem_ctx)?;
+        tex.set_image(Some(&[255; 128 * 128 * 4]), 128, 128, ColorFormat::RGBA);
         golem_ctx.set_blend_mode(Some(blend_mode));
         let mut shader = ShaderProgram::new(
             &golem_ctx,
             ShaderDescription {
                 vertex_input: &[
                     Attribute::new("vert_position", AttributeType::Vector(D2)),
+                    Attribute::new("vert_uv", AttributeType::Vector(D2)),
                     Attribute::new("vert_color", AttributeType::Vector(D4)),
-                    //Attribute::new("vert_uv", AttributeType::Vector(D2)),
                 ],
                 fragment_input: &[
                     Attribute::new("frag_color", AttributeType::Vector(D4)),
-                    //Attribute::new("frag_uv", AttributeType::Vector(D2)),
+                    Attribute::new("frag_uv", AttributeType::Vector(D2)),
                 ],
                 uniforms: &[
                     Uniform::new("projection", UniformType::Matrix(D4)),
-                    //Uniform::new("texture", UniformType::Sampler2D),
+                    Uniform::new("tex", UniformType::Sampler2D),
                 ],
                 vertex_shader: r#" void main() {
                     gl_Position = projection * vec4(vert_position, 0, 1);
+                    frag_uv = vert_uv;
                     frag_color = vert_color;
                 }"#,
                 fragment_shader: r#" void main() {
-                    gl_FragColor = frag_color;
+                    gl_FragColor = frag_color * texture(tex, frag_uv.st);
                 }"#,
             },
         )?;
@@ -70,6 +74,7 @@ impl GolemBackend {
         shader.bind();
         Ok(Self {
             golem_ctx,
+            tex,
             shader,
             vb,
             eb,
@@ -97,8 +102,10 @@ impl GolemBackend {
         self.eb.set_data(&indices);
         self.shader.prepare_draw(&self.vb, &self.eb)?;
         self.shader.set_uniform("projection", projection)?;
+        self.shader.set_uniform("tex", UniformValue::Int(1))?;
         self.golem_ctx.set_viewport(0, 0, draw_list.screen_size.x, draw_list.screen_size.y);
         self.golem_ctx.set_clear_color(draw_list.bg_color.x, draw_list.bg_color.y, draw_list.bg_color.z, draw_list.bg_color.w);
+        self.tex.set_active(std::num::NonZeroU32::new(1).unwrap());
         self.golem_ctx.clear();
         for cmd in &draw_list.cmds {
             unsafe {

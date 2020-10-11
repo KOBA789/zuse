@@ -3,6 +3,7 @@ name = "zuse-rs"
 version = "0.1.0"
 authors = ["Hidekazu Kobayashi <kobahide789@gmail.com>"]
 edition = "2018"
+publish = false
 
 [lib]
 crate-type = ["cdylib"]

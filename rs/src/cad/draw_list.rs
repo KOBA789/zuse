@@ -72,20 +72,25 @@ impl DrawList {
         d.try_normalize_mut(0.);
         d.scale_mut(params.half_thickness);
 
+        let uv = Vector2::zeros();
         let v0 = self.push_vert(Vert {
             pos: Vector2::new(p1.x + d.y, p1.y - d.x),
+            uv,
             col,
         });
         let v1 = self.push_vert(Vert {
             pos: Vector2::new(p2.x + d.y, p2.y - d.x),
+            uv,
             col,
         });
         let v2 = self.push_vert(Vert {
             pos: Vector2::new(p2.x - d.y, p2.y + d.x),
+            uv,
             col,
         });
         let v3 = self.push_vert(Vert {
             pos: Vector2::new(p1.x - d.y, p1.y + d.x),
+            uv,
             col,
         });
         self.push_elem(v0, v1, v2);
@@ -97,12 +102,12 @@ impl DrawList {
             let horizon = Vector2::new(-d.y, d.x);
             for r in params.cap_segments.iter() {
                 if r.perp(&horizon) < 0. {
-                    let v = self.push_vert(Vert { pos: p1 + r, col });
+                    let v = self.push_vert(Vert { pos: p1 + r, uv, col });
                     self.push_elem(v0, v_b, v);
                     v_b = v;
                     v_t = v1;
                 } else {
-                    let v = self.push_vert(Vert { pos: p2 + r, col });
+                    let v = self.push_vert(Vert { pos: p2 + r, uv, col });
                     self.push_elem(v_t, v2, v);
                     v_t = v;
                     v_b = v3;
@@ -127,20 +132,25 @@ impl DrawList {
         d.try_normalize_mut(0.);
         d.scale_mut(half_thickness);
 
+        let uv = Vector2::zeros();
         let v0 = self.push_vert(Vert {
             pos: Vector2::new(p1.x + d.y, p1.y - d.x),
+            uv,
             col,
         });
         let v1 = self.push_vert(Vert {
             pos: Vector2::new(p2.x + d.y, p2.y - d.x),
+            uv,
             col,
         });
         let v2 = self.push_vert(Vert {
             pos: Vector2::new(p2.x - d.y, p2.y + d.x),
+            uv,
             col,
         });
         let v3 = self.push_vert(Vert {
             pos: Vector2::new(p1.x - d.y, p1.y + d.x),
+            uv,
             col,
         });
         self.push_elem(v0, v1, v2);
@@ -154,12 +164,12 @@ impl DrawList {
                 let rad = i as f32 * 2.0 / cap_segment_count as f32 * std::f32::consts::PI;
                 let r = Vector2::new(rad.cos(), rad.sin()).scale(half_thickness);
                 if r.perp(&horizon) < 0. {
-                    let v = self.push_vert(Vert { pos: p1 + r, col });
+                    let v = self.push_vert(Vert { pos: p1 + r, uv, col });
                     self.push_elem(v0, v_b, v);
                     v_b = v;
                     v_t = v1;
                 } else {
-                    let v = self.push_vert(Vert { pos: p2 + r, col });
+                    let v = self.push_vert(Vert { pos: p2 + r, uv, col });
                     self.push_elem(v_t, v2, v);
                     v_t = v;
                     v_b = v3;
@@ -178,12 +188,15 @@ impl DrawList {
 
         let r_o = r + half_thickness;
         let r_i = r - half_thickness;
+        let uv = Vector2::zeros();
         let mut v_o0 = self.push_vert(Vert {
             pos: p + Vector2::new(r_o, 0.),
+            uv,
             col,
         });
         let mut v_i0 = self.push_vert(Vert {
             pos: p + Vector2::new(r_i, 0.),
+            uv,
             col,
         });
         for i in 1..=segment_count {
@@ -191,10 +204,12 @@ impl DrawList {
             let v = Vector2::new(rad.cos(), rad.sin());
             let v_o1 = self.push_vert(Vert {
                 pos: p + v.scale(r_o),
+                uv,
                 col,
             });
             let v_i1 = self.push_vert(Vert {
                 pos: p + v.scale(r_i),
+                uv,
                 col,
             });
             self.push_elem(v_o0, v_i0, v_o1);
@@ -208,20 +223,25 @@ impl DrawList {
     pub fn add_square(&mut self, p: Vector2<f32>, size: f32, col: Color) {
         let half_size = size * 0.5;
         self.reserve(6, 4);
+        let uv = Vector2::zeros();
         let a = self.push_vert(Vert {
             pos: p + Vector2::new(-half_size, -half_size),
+            uv,
             col,
         });
         let b = self.push_vert(Vert {
             pos: p + Vector2::new(half_size, -half_size),
+            uv,
             col,
         });
         let c = self.push_vert(Vert {
             pos: p + Vector2::new(-half_size, half_size),
+            uv,
             col,
         });
         let d = self.push_vert(Vert {
             pos: p + Vector2::new(half_size, half_size),
+            uv,
             col,
         });
         self.push_elem(a, b, c);
@@ -284,7 +304,7 @@ impl LineParams {
 #[repr(C)]
 pub struct Vert {
     pos: Vector2<f32>,
-    //uv: Vector2<f32>,
+    uv: Vector2<f32>,
     col: Color,
 }
 
