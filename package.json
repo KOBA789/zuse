@@ -24,7 +24,7 @@
     "eslint": "^7.9.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-config-react": "^1.1.7",
-    "eslint-plugin-emotion": "^10.0.27",
+    "eslint-plugin-emotion": "^11.0.0",
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-react": "^7.20.6",
     "eslint-plugin-react-hooks": "^4.1.2",
