@@ -18,7 +18,7 @@ itertools = "0.9"
 lazy_static = "1.4"
 
 [dependencies.web-sys]
-version = "0.3.45"
+version = "0.3.46"
 features = [
   'console',
   'Document',
