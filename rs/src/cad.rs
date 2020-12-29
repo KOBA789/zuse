@@ -331,11 +331,13 @@ impl Cad {
 
     pub fn new_frame(&mut self, io: &mut Io) {
         self.transform.screen_size = io.screen_size;
+        let pixel_ratio = io.pixel_ratio;
         self.process_pan_zoom(&io);
         self.process_cursor(&io);
         self.process_events(&io);
         io.reset();
         self.draw_list.clear();
+        self.draw_list.pixel_ratio = pixel_ratio;
         self.draw_list.scale = self.transform.scale;
         self.draw_list.translate = self.transform.translate;
         self.draw_list.screen_size = self.transform.screen_size;

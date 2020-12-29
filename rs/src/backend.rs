@@ -103,7 +103,9 @@ impl GolemBackend {
         self.shader.prepare_draw(&self.vb, &self.eb)?;
         self.shader.set_uniform("projection", projection)?;
         self.shader.set_uniform("tex", UniformValue::Int(1))?;
-        self.golem_ctx.set_viewport(0, 0, draw_list.screen_size.x, draw_list.screen_size.y);
+        self.golem_ctx.set_viewport(0, 0,
+            ((draw_list.screen_size.x as f32) * draw_list.pixel_ratio) as u32,
+            ((draw_list.screen_size.y as f32) * draw_list.pixel_ratio) as u32);
         self.golem_ctx.set_clear_color(draw_list.bg_color.x, draw_list.bg_color.y, draw_list.bg_color.z, draw_list.bg_color.w);
         self.tex.set_active(std::num::NonZeroU32::new(1).unwrap());
         self.golem_ctx.clear();

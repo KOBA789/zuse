@@ -5,6 +5,7 @@ pub type Color = Vector4<f32>;
 #[derive(Debug, Clone)]
 pub struct DrawList {
     pub screen_size: Vector2<u32>,
+    pub pixel_ratio: f32,
     pub translate: Vector2<f32>,
     pub scale: f32,
     pub bg_color: Color,
@@ -17,6 +18,7 @@ impl DrawList {
     pub fn new(screen_size: Vector2<u32>) -> Self {
         Self {
             screen_size,
+            pixel_ratio: 1.0,
             translate: Vector2::zeros(),
             scale: 1.,
             bg_color: Color::new(1., 1., 1., 1.),

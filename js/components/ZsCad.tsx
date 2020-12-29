@@ -29,9 +29,11 @@ export const ZsCad: React.FC = () => {
         }
         const width = canvas.current!.clientWidth;
         const height = canvas.current!.clientHeight;
-        canvas.current!.width = width;
-        canvas.current!.height = height;
-        io!.setScreenSize(width, height);
+        canvas.current!.width = width * window.devicePixelRatio;
+        canvas.current!.height = height  * window.devicePixelRatio;
+        canvas.current!.style.width = `${width}px`;
+        canvas.current!.style.height = `${height}px`;
+        io!.setScreenSize(width, height, window.devicePixelRatio);
         zsSch.new_frame(io!);
         zsSch.draw();
         requestAnimationFrame(loop);
