@@ -2,6 +2,7 @@ mod backend;
 mod schematic;
 mod cad;
 mod symbol;
+mod font;
 pub use cad::{Cad, Io};
 pub use backend::GolemBackend;
 

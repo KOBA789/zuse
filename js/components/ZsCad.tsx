@@ -30,9 +30,9 @@ export const ZsCad: React.FC = () => {
         const width = canvas.current!.clientWidth;
         const height = canvas.current!.clientHeight;
         canvas.current!.width = width * window.devicePixelRatio;
-        canvas.current!.height = height  * window.devicePixelRatio;
-        canvas.current!.style.width = `${width}px`;
-        canvas.current!.style.height = `${height}px`;
+        canvas.current!.height = height * window.devicePixelRatio;
+        //canvas.current!.style.width = `${width}px`;
+        //canvas.current!.style.height = `${height}px`;
         io!.setScreenSize(width, height, window.devicePixelRatio);
         zsSch.new_frame(io!);
         zsSch.draw();
@@ -62,14 +62,14 @@ export const ZsCad: React.FC = () => {
       io.mouseX = e.clientX - rect.left;
       io.mouseY = e.clientY - rect.top;
     };
-    const onMouseDown = function (this: HTMLCanvasElement, e: MouseEvent) {
+    const onMouseDown = function (this: HTMLCanvasElement, _e: MouseEvent) {
       this.focus();
       if (!io) {
         return;
       }
       //io.push_keydown(e.button);
     };
-    const onMouseUp = function (this: HTMLCanvasElement, e: MouseEvent) {
+    const onMouseUp = function (this: HTMLCanvasElement, _e: MouseEvent) {
       if (!io) {
         return;
       }

@@ -5,6 +5,7 @@ use crate::symbol;
 
 use super::backend::GolemBackend;
 use super::schematic;
+use super::font::FONT;
 pub use draw_list::{Color, DrawCmd, DrawList};
 pub use io::Io;
 use nalgebra::Vector2;
@@ -283,7 +284,7 @@ impl Cad {
                 }
                 (false, None)
             }
-            io::Event::Keydown(key) if key == "m" => {
+            io::Event::Keydown(key) if key == "y" => {
                 if symbol.can_mirror() {
                     *rot_mirror = rot_mirror.mirror();
                 }
@@ -521,6 +522,21 @@ impl Cad {
                     symbol::coil::draw(state).map(|draw| draw.transform(rot_mirror, position));
                 self.draw_symbol(col, draw_iter);
             }
+        }
+    }
+
+    fn text(&mut self, p: Vector2<f32>, text: &str) {
+        let mut advance = Vector2::new(0.0f32, 0.0);
+        for char in text.chars() {
+            if let Some(glyph) = FONT.glyph(char) {
+                for (p1, p2) in glyph {
+                    let p1 = p + (advance + p1).scale(4.5454);
+                    let p2 = p + (advance + p2).scale(4.5454);
+                    let col = Color::new(0., 0., 0., 1.);
+                    self.draw_list.add_line(p1, p2, col, 3.0);
+                }
+            }
+            advance += Vector2::new(FONT.advance(), 0.0);
         }
     }
 

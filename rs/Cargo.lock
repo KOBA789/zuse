@@ -573,6 +573,7 @@ dependencies = [
  "nalgebra",
  "rstar",
  "serde",
+ "serde_json",
  "wasm-bindgen",
  "web-sys",
 ]
