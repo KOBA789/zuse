@@ -12,7 +12,7 @@ crate-type = ["cdylib"]
 serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { version = "0.2.69", features = ["serde-serialize"] }
 js-sys = "0.3.46"
-nalgebra = "0.23"
+nalgebra = "0.26"
 rstar = "0.8"
 itertools = "0.9"
 lazy_static = "1.4"
