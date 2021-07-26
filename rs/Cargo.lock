@@ -238,6 +238,7 @@ dependencies = [
  "num-traits",
  "rand",
  "rand_distr",
+ "serde",
  "simba",
  "typenum",
 ]
@@ -249,6 +250,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "747d632c0c558b87dbabbe6a82f3b4ae03720d0646ac5b7b4dae89394be5f2c5"
 dependencies = [
  "num-traits",
+ "serde",
 ]
 
 [[package]]
@@ -384,6 +386,7 @@ dependencies = [
  "heapless",
  "num-traits",
  "pdqselect",
+ "serde",
  "smallvec",
 ]
 
@@ -562,6 +565,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b07db065a5cf61a7e4ba64f29e67db906fb1787316516c4e6e5ff0fea1efcd8a"
 
 [[package]]
+name = "zuse-core"
+version = "0.1.0"
+source = "git+https://github.com/koba789/zuse-core#593cdd052d956be9b2dc56e21de6419c0dbad532#593cdd052d956be9b2dc56e21de6419c0dbad532"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "zuse-rs"
 version = "0.1.0"
 dependencies = [
@@ -576,4 +588,5 @@ dependencies = [
  "serde_json",
  "wasm-bindgen",
  "web-sys",
+ "zuse-core",
 ]

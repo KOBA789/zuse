@@ -5,6 +5,9 @@ authors = ["Hidekazu Kobayashi <kobahide789@gmail.com>"]
 edition = "2018"
 publish = false
 
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
 [lib]
 crate-type = ["cdylib"]
 
@@ -12,11 +15,12 @@ crate-type = ["cdylib"]
 serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { version = "0.2.69", features = ["serde-serialize"] }
 js-sys = "0.3.46"
-nalgebra = "0.23"
-rstar = "0.8"
+nalgebra = { version = "0.23", features = ["serde-serialize"] }
+rstar = { version = "0.8", features = ["serde"] }
 itertools = "0.9"
 lazy_static = "1.4"
 serde_json = "1.0"
+zuse-core = { git = "https://github.com/koba789/zuse-core#593cdd052d956be9b2dc56e21de6419c0dbad532" }
 
 [dependencies.web-sys]
 version = "0.3.46"

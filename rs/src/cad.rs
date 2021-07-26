@@ -4,8 +4,8 @@ mod io;
 use crate::symbol;
 
 use super::backend::GolemBackend;
-use super::schematic;
 use super::font::FONT;
+use super::schematic;
 pub use draw_list::{Color, DrawCmd, DrawList};
 pub use io::Io;
 use nalgebra::Vector2;
@@ -21,6 +21,7 @@ pub struct Cad {
     pointer: Vector2<i32>,
     tool_state: ToolState,
     sch_state: schematic::State,
+    circuit: Option<zuse_core::Circuit>,
 }
 
 enum ToolState {
@@ -137,6 +138,7 @@ impl Cad {
             pointer: Vector2::zeros(),
             tool_state: ToolState::Selection,
             sch_state: schematic::State::default(),
+            circuit: None,
         }
     }
 
@@ -203,6 +205,31 @@ impl Cad {
                 }
                 _ => (true, None),
             },
+            io::Event::DoubleClick(0) => {
+                if let Some(_) = &mut self.circuit {
+                    return (false, None);
+                }
+                if let Some(comp) = self.sch_state.components_iter_mut(rstar::AABB::from_point(self.cursor.into())).next() {
+                    if let Some(new_label) = web_sys::window().unwrap().prompt_with_message_and_default("Label", &comp.label).unwrap() {
+                        comp.label = new_label;
+                    }
+                }
+                (false, None)
+            },
+            io::Event::Click(0) => {
+                if let Some(circuit) = &mut self.circuit {
+                    if let Some(component) = self.sch_state.components_iter(rstar::AABB::from_point(self.cursor.into())).next() {
+                        if component.symbol == symbol::Kind::Contact {
+                            let state = circuit.get_state(&format!("{}.A", &component.label)).unwrap_or(false);
+                            let a = !state;
+                            let b = !a;
+                            circuit.set_state(&format!("{}.A", &component.label), a);
+                            circuit.set_state(&format!("{}.B", &component.label), b);
+                        }
+                    }
+                }
+                (false, None)
+            },
             _ => (true, None),
         }
     }
@@ -259,6 +286,7 @@ impl Cad {
                             self.cursor,
                             symbol::Kind::Power,
                             *rot_mirror,
+                            "V+".to_string(),
                         );
                         self.sch_state.add_component(power);
                     }
@@ -267,12 +295,17 @@ impl Cad {
                             self.cursor,
                             symbol::Kind::Contact,
                             *rot_mirror,
+                            "R".to_string(),
                         );
                         self.sch_state.add_component(contact);
                     }
                     symbol::Kind::Coil => {
-                        let coil =
-                            schematic::Component::new(self.cursor, symbol::Kind::Coil, *rot_mirror);
+                        let coil = schematic::Component::new(
+                            self.cursor,
+                            symbol::Kind::Coil,
+                            *rot_mirror,
+                            "R".to_string(),
+                        );
                         self.sch_state.add_component(coil);
                     }
                 }
@@ -394,6 +427,7 @@ impl Cad {
         }
         for component in sch_state.components_iter(aabb) {
             self.component(component);
+            self.text((component.position + Vector2::new(50, 0)).map(|n| n as f32), &component.label);
         }
         for (p, rc) in sch_state.junctions_iter(&aabb) {
             self.junction(p, rc);
@@ -437,15 +471,16 @@ impl Cad {
                 self.draw_symbol(col, draw_iter);
             }
             symbol::Kind::Contact => {
-                let state = false; // TODO: use simulator's state
+                let a = self.circuit.as_ref().and_then(|c| c.get_state(&format!("{}.A", &component.label))).unwrap_or(false);
+                let b = self.circuit.as_ref().and_then(|c| c.get_state(&format!("{}.B", &component.label))).unwrap_or(true);
                 let draw_iter =
-                    symbol::contact::draw(state).map(|draw| draw.transform(rot_mirror, position));
+                    symbol::contact::draw(a, b).map(|draw| draw.transform(rot_mirror, position));
                 self.draw_symbol(col, draw_iter);
             }
             symbol::Kind::Coil => {
-                let state = false; // TODO: use simulator's state
+                let a = self.circuit.as_ref().and_then(|c| c.get_state(&format!("{}.A", &component.label))).unwrap_or(false);
                 let draw_iter =
-                    symbol::coil::draw(state).map(|draw| draw.transform(rot_mirror, position));
+                    symbol::coil::draw(a).map(|draw| draw.transform(rot_mirror, position));
                 self.draw_symbol(col, draw_iter);
             }
         }
@@ -511,9 +546,8 @@ impl Cad {
                 self.draw_symbol(col, draw_iter);
             }
             symbol::Kind::Contact => {
-                let state = false; // TODO: use simulator's state
                 let draw_iter =
-                    symbol::contact::draw(state).map(|draw| draw.transform(rot_mirror, position));
+                    symbol::contact::draw(false, true).map(|draw| draw.transform(rot_mirror, position));
                 self.draw_symbol(col, draw_iter);
             }
             symbol::Kind::Coil => {
@@ -541,6 +575,9 @@ impl Cad {
     }
 
     pub fn draw(&mut self) {
+        if let Some(circuit) = &mut self.circuit {
+            circuit.simulate();
+        }
         self.draw_grid();
         self.draw_schematic();
         let state = std::mem::replace(&mut self.tool_state, ToolState::Selection);
@@ -561,5 +598,38 @@ impl Cad {
         }
         self.tool_state = state;
         self.backend.draw(&self.draw_list).unwrap();
+    }
+
+    pub fn save_schematic(&self) -> String {
+        serde_json::to_string(&self.sch_state).unwrap()
+    }
+    pub fn load_schematic(&mut self, json: String) {
+        self.sch_state = serde_json::from_str(&json).unwrap();
+    }
+    pub fn start_simulation(&mut self) {
+        let netlist = self.sch_state.build_netlist();
+        web_sys::console::log_1(&serde_json::to_string(&netlist).unwrap().into());
+        let spec = zuse_core::compile(&netlist);
+        let mut circuit = spec.build();
+        circuit.simulate();
+        self.circuit = Some(circuit);
+    }
+    pub fn stop_simulation(&mut self) {
+        self.circuit = None;
+    }
+}
+
+#[wasm_bindgen]
+#[derive(Debug, PartialEq, Eq)]
+pub struct ComponentMetadata {
+    position: (i32, i32),
+    label: String,
+    symbol: symbol::Kind,
+}
+
+#[wasm_bindgen]
+impl ComponentMetadata {
+    pub fn label(&self) -> String {
+        self.label.clone()
     }
 }

@@ -1,10 +1,12 @@
+use std::collections::HashMap;
+use std::rc::Rc;
+use std::cell::RefCell;
+
 use itertools::Itertools;
 use nalgebra::Vector2;
-use rstar::{
-    primitives::{Line, PointWithData},
-    RTree, AABB,
-};
+use rstar::{AABB, RTree, RTreeObject, primitives::{Line, PointWithData}};
 use serde::{Deserialize, Serialize};
+use web_sys::console;
 
 use crate::symbol;
 
@@ -170,7 +172,7 @@ impl Wire for WireV {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct Junctions {
     rtree: RTree<PointWithData<u8, [i32; 2]>>,
 }
@@ -201,7 +203,7 @@ impl Junctions {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 pub struct RotMirror(i8, i8, i8, i8);
 impl RotMirror {
     pub fn rotate_r(self) -> RotMirror {
@@ -243,16 +245,23 @@ impl Default for RotMirror {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Component {
     pub position: Vector2<i32>,
     aabb: AABB<[i32; 2]>,
     pub symbol: symbol::Kind,
     pub rot_mirror: RotMirror,
+    #[serde(default)]
+    pub label: String,
 }
 
 impl Component {
-    pub fn new(position: Vector2<i32>, symbol: symbol::Kind, rot_mirror: RotMirror) -> Self {
+    pub fn new(
+        position: Vector2<i32>,
+        symbol: symbol::Kind,
+        rot_mirror: RotMirror,
+        label: String,
+    ) -> Self {
         let aabb = symbol.aabb();
         let p1 = rot_mirror.apply(aabb.upper().into()) + position;
         let p2 = rot_mirror.apply(aabb.lower().into()) + position;
@@ -262,11 +271,12 @@ impl Component {
             aabb,
             symbol,
             rot_mirror,
+            label,
         }
     }
 
     fn rot_mirror(&self, rot_mirror: RotMirror) -> Self {
-        Self::new(self.position, self.symbol, rot_mirror)
+        Self::new(self.position, self.symbol, rot_mirror, self.label.clone())
     }
 
     fn pads(&self) -> impl Iterator<Item = symbol::Pad> {
@@ -288,7 +298,7 @@ impl rstar::RTreeObject for Component {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct State {
     wires: RTree<Line<[i32; 2]>>,
     junctions: Junctions,
@@ -474,7 +484,10 @@ impl State {
         }
     }
 
-    pub fn add_component(&mut self, component: Component) {
+    pub fn add_component(&mut self, component: Component) -> bool {
+        if self.components.locate_in_envelope_intersecting(&component.envelope()).next().is_some() {
+            return false;
+        }
         for pad in component.pads() {
             let p = pad.position;
             let contacting_wires = self
@@ -498,6 +511,7 @@ impl State {
             self.junctions.incr_by(p.into(), 1);
         }
         self.components.insert(component);
+        true
     }
 
     pub fn wires_iter(&self, aabb: &AABB<[i32; 2]>) -> impl Iterator<Item = &Line<[i32; 2]>> {
@@ -516,5 +530,106 @@ impl State {
 
     pub fn components_iter(&self, aabb: AABB<[i32; 2]>) -> impl Iterator<Item = &Component> {
         self.components.locate_in_envelope_intersecting(&aabb)
+    }
+
+    pub fn components_iter_mut(&mut self, aabb: AABB<[i32; 2]>) -> impl Iterator<Item = &mut Component> {
+        self.components.locate_in_envelope_intersecting_mut(&aabb)
+    }
+
+    pub fn build_netlist(&self) -> zuse_core::net::Netlist {
+        let mut max_net = 0;
+        let mut net_alias = HashMap::<u32, u32>::new();
+        let min_net = |net_alias: &HashMap<u32, u32>, mut net: u32| loop {
+            match net_alias.get(&net) {
+                Some(&less) => net = less,
+                None => return net,
+            }
+        };
+        let mut net_map = HashMap::<[i32; 2], u32>::new();
+        for component in self.components.iter() {
+            if let symbol::Kind::Power = component.symbol {
+                net_map.insert(component.position.into(), 0);
+            }
+        }
+        for wire in self.wires.iter() {
+            let from_entry = net_map.get(&wire.from);
+            let to_entry = net_map.get(&wire.to);
+            match (from_entry, to_entry) {
+                (None, None) => {
+                    max_net += 1;
+                    let new_net = max_net;
+                    net_map.insert(wire.from, new_net);
+                    net_map.insert(wire.to, new_net);
+                }
+                (None, Some(&net)) => {
+                    net_map.insert(wire.from, net);
+                }
+                (Some(&net), None) => {
+                    net_map.insert(wire.to, net);
+                }
+                (Some(&net1), Some(&net2)) => {
+                    if net1 != net2 {
+                        let min_net = min_net(&net_alias, net1.min(net2));
+                        net_alias.insert(net1.max(net2), min_net);
+                    }
+                }
+            }
+        }
+        let mut uni_net_map = HashMap::new();
+        for (p, net) in net_map.into_iter() {
+            uni_net_map.insert(p, min_net(&net_alias, net));
+        }
+        let mut relays = vec![];
+        let mut switches = vec![];
+        for component in self.components.iter() {
+            match component.symbol {
+                symbol::Kind::Power => {}
+                symbol::Kind::Contact => {
+                    let mut pads = component.pads();
+                    let pad_c = pads.next().unwrap();
+                    let pad_a = pads.next().unwrap();
+                    let pad_b = pads.next().unwrap();
+                    let pad_c_p: [i32; 2] = pad_c.position.into();
+                    let pad_a_p: [i32; 2] = pad_a.position.into();
+                    let pad_b_p: [i32; 2] = pad_b.position.into();
+                    let pad_c_net = uni_net_map.get(&pad_c_p).copied().unwrap_or_else(|| {
+                        max_net += 1;
+                        max_net
+                    });
+                    let pad_a_net = uni_net_map.get(&pad_a_p).copied().unwrap_or_else(|| {
+                        max_net += 1;
+                        max_net
+                    });
+                    let pad_b_net = uni_net_map.get(&pad_b_p).copied().unwrap_or_else(|| {
+                        max_net += 1;
+                        max_net
+                    });
+                    switches.push(zuse_core::net::Switch {
+                        state: format!("{}.A", component.label),
+                        l: format!("N{}", pad_c_net),
+                        r: format!("N{}", pad_a_net),
+                    });
+                    switches.push(zuse_core::net::Switch {
+                        state: format!("{}.B", component.label),
+                        l: format!("N{}", pad_c_net),
+                        r: format!("N{}", pad_b_net),
+                    });
+                }
+                symbol::Kind::Coil => {
+                    let pad = component.pads().next().unwrap();
+                    let p: [i32; 2] = pad.position.into();
+                    let net = uni_net_map.get(&p).copied().unwrap_or_else(|| {
+                        max_net += 1;
+                        max_net
+                    });
+                    relays.push(zuse_core::net::Relay {
+                        coil: format!("N{}", net),
+                        a: format!("{}.A", &component.label),
+                        b: format!("{}.B", &component.label),
+                    });
+                }
+            }
+        }
+        zuse_core::net::Netlist { relays, switches }
     }
 }

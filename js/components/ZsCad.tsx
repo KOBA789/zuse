@@ -1,7 +1,7 @@
 /** @jsx jsx */
 import { css, jsx } from "@emotion/core";
-import React, { useEffect, useRef } from "react";
-import type { Io } from "../../rs/pkg";
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import type { Cad, ComponentMetadata, Io } from "../../rs/pkg";
 
 const zsCadStyle = css`
   display: block;
@@ -9,8 +9,46 @@ const zsCadStyle = css`
   height: 100%;
 `;
 
-export const ZsCad: React.FC = () => {
+export type Handler = {
+  saveSchematic: () => string,
+  loadSchematic: (zse: string) => void,
+  startSimulation: () => void,
+  stopSimulation: () => void,
+};
+
+export type ZsCadProps = {};
+
+export const ZsCad = forwardRef<Handler, ZsCadProps>(({}, ref) => {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const [zsSch, setZsSch] = useState(null as Cad | null);
+  useImperativeHandle(ref, () => {
+    return {
+      saveSchematic: () => {
+        if (zsSch === null) {
+          throw new Error("Cad is not initialized");
+        }
+        return zsSch.save_schematic();
+      },
+      loadSchematic: (zse) => {
+        if (zsSch === null) {
+          throw new Error("Cad is not initialized");
+        }
+        zsSch.load_schematic(zse);
+      },
+      startSimulation: () => {
+        if (zsSch === null) {
+          throw new Error("Cad is not initialized");
+        }
+        zsSch.start_simulation();
+      },
+      stopSimulation: () => {
+        if (zsSch === null) {
+          throw new Error("Cad is not initialized");
+        }
+        zsSch.stop_simulation();
+      },
+    };
+  });
   useEffect(() => {
     const webgl = canvas.current!.getContext("webgl")!;
     let isUnmounted = false;
@@ -22,6 +60,7 @@ export const ZsCad: React.FC = () => {
       const backend = new GolemBackend(webgl);
       io = new Io();
       const zsSch = new Cad(backend);
+      setZsSch(zsSch);
       const loop = () => {
         if (isUnmounted) {
           zsSch.free();
@@ -112,4 +151,4 @@ export const ZsCad: React.FC = () => {
     };
   }, []);
   return <canvas ref={canvas} css={zsCadStyle} tabIndex={0} />;
-};
+});

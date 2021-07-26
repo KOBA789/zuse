@@ -1,9 +1,10 @@
 use nalgebra::Vector2;
 use rstar::AABB;
+use serde::{Serialize, Deserialize};
 
 use super::schematic::RotMirror;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Kind {
     Power,
     Contact,
@@ -161,14 +162,18 @@ pub mod contact {
         };
     }
 
-    pub fn draw(state: bool) -> impl Iterator<Item = Draw> {
+    pub fn draw(a: bool, b: bool) -> impl Iterator<Item = Draw> {
         STATIC_DRAW
             .iter()
             .cloned()
             .chain(std::iter::once_with(move || {
                 let mut p1 = MOVING_CONTACT_LINE.0;
                 let mut p2 = MOVING_CONTACT_LINE.1;
-                if state {
+                if a == b {
+                    p1.x = 0.;
+                    p2.x = 0.;
+                    Draw::Line(p1, p2, 6.)
+                } else if a {
                     p1.x = -p1.x;
                     p2.x = -p2.x;
                     Draw::Line(p1, p2, 6.)
@@ -200,9 +205,16 @@ pub mod coil {
         ];
     }
 
-    pub fn draw(_state: bool) -> impl Iterator<Item = Draw> {
+    pub fn draw(state: bool) -> impl Iterator<Item = Draw> {
         STATIC_DRAW
             .iter()
             .cloned()
+            .chain(std::iter::once_with(move || {
+                if state {
+                    Draw::Circle([0., 0.].into(), 25., 6.)
+                } else {
+                    Draw::Circle([0., 0.].into(), 50., 6.)
+                }
+            }))
     }
 }

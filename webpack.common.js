@@ -7,6 +7,9 @@ const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
+  output: {
+    publicPath: '',
+  },
   entry: {
     app: ["./js/index.ts", "./js/style.css"],
   },
@@ -45,5 +48,8 @@ module.exports = {
   },
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
+  },
+  experiments: {
+    asyncWebAssembly: true,
   },
 };
