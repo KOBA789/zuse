@@ -1,5 +1,5 @@
 /** @jsx jsx */
-import { css, jsx } from "@emotion/core";
+import { css, jsx } from "@emotion/react";
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { Cad, ComponentMetadata, Io } from "../../rs/pkg";
 

@@ -1,6 +1,7 @@
 /*eslint-env node*/
 
 const path = require("path");
+const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
@@ -8,12 +9,15 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
   output: {
-    publicPath: '',
+    publicPath: "",
   },
   entry: {
     app: ["./js/index.ts", "./js/style.css"],
   },
   plugins: [
+    new webpack.DefinePlugin({
+      "process": JSON.stringify({ env: {} }),
+    }),
     new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       title: "Zuse",
@@ -48,8 +52,5 @@ module.exports = {
   },
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
-  },
-  experiments: {
-    asyncWebAssembly: true,
   },
 };
