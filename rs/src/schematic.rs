@@ -1,12 +1,9 @@
 use std::collections::HashMap;
-use std::rc::Rc;
-use std::cell::RefCell;
 
 use itertools::Itertools;
 use nalgebra::Vector2;
 use rstar::{AABB, RTree, RTreeObject, primitives::{Line, PointWithData}};
 use serde::{Deserialize, Serialize};
-use web_sys::console;
 
 use crate::symbol;
 
@@ -211,6 +208,7 @@ impl RotMirror {
         RotMirror(-c, -d, a, b)
     }
 
+    #[allow(dead_code)]
     pub fn rotate_l(self) -> RotMirror {
         let RotMirror(a, b, c, d) = self;
         RotMirror(c, d, -a, -b)
@@ -436,7 +434,7 @@ impl State {
     }
 
     fn delete_component(&mut self, component: &Component, dirty_junctions: &mut Vec<[i32; 2]>) {
-        self.components.remove(&component);
+        self.components.remove(component);
         for pad in component.pads() {
             let p = pad.position.into();
             let rc = self.junctions.decr_by(p, 1);

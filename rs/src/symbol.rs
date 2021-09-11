@@ -77,7 +77,7 @@ impl Pad {
     pub fn transform(&self, rot_mirror: RotMirror, translate: Vector2<i32>) -> Pad {
         Pad {
             position: rot_mirror.apply(self.position) + translate,
-            name: &self.name
+            name: self.name
         }
     }
 }
@@ -89,11 +89,12 @@ impl Pads {
         Pads(vec)
     }
 
+    #[allow(dead_code)]
     pub fn get(&self, name: &str) -> Option<&Pad> {
         self.0.iter().find(|pad| pad.name == name)
     }
 
-    pub fn transform<'a>(&'a self, rot_mirror: RotMirror, translate: Vector2<i32>) -> impl Iterator<Item = Pad> + 'a {
+    pub fn transform(&self, rot_mirror: RotMirror, translate: Vector2<i32>) -> impl Iterator<Item = Pad> + '_ {
         self.iter().map(move |pad| pad.transform(rot_mirror, translate))
     }
 }
@@ -169,6 +170,7 @@ pub mod contact {
             .chain(std::iter::once_with(move || {
                 let mut p1 = MOVING_CONTACT_LINE.0;
                 let mut p2 = MOVING_CONTACT_LINE.1;
+                #[allow(clippy::branches_sharing_code)]
                 if a == b {
                     p1.x = 0.;
                     p2.x = 0.;
@@ -186,7 +188,6 @@ pub mod contact {
 
 pub mod coil {
     use super::{Draw, Pad, Pads};
-    use nalgebra::Vector2;
     lazy_static::lazy_static! {
         pub static ref AABB: rstar::AABB<[i32; 2]> = rstar::AABB::from_corners([-50, -100], [50, 150]);
         pub static ref PADS: Pads = Pads::new(vec![

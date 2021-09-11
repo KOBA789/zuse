@@ -93,6 +93,7 @@ impl Transform {
         (screen - self.translate).unscale(self.scale)
     }
 
+    #[allow(dead_code)]
     fn world_to_screen(&self, world: Vector2<f32>) -> Vector2<f32> {
         world.scale(self.scale) + self.translate
     }
@@ -206,7 +207,7 @@ impl Cad {
                 _ => (true, None),
             },
             io::Event::DoubleClick(0) => {
-                if let Some(_) = &mut self.circuit {
+                if self.circuit.is_some() {
                     return (false, None);
                 }
                 if let Some(comp) = self.sch_state.components_iter_mut(rstar::AABB::from_point(self.cursor.into())).next() {
@@ -359,16 +360,16 @@ impl Cad {
 
     fn process_events(&mut self, io: &Io) {
         for event in &io.events {
-            self.process_event(&event);
+            self.process_event(event);
         }
     }
 
     pub fn new_frame(&mut self, io: &mut Io) {
         self.transform.screen_size = io.screen_size;
         let pixel_ratio = io.pixel_ratio;
-        self.process_pan_zoom(&io);
-        self.process_cursor(&io);
-        self.process_events(&io);
+        self.process_pan_zoom(io);
+        self.process_cursor(io);
+        self.process_events(io);
         io.reset();
         self.draw_list.clear();
         self.draw_list.pixel_ratio = pixel_ratio;
@@ -583,7 +584,7 @@ impl Cad {
         let state = std::mem::replace(&mut self.tool_state, ToolState::Selection);
         match &state {
             ToolState::Wiring(wiring) => {
-                self.draw_wiring(&wiring);
+                self.draw_wiring(wiring);
                 self.draw_cursor();
             }
             ToolState::ReadyToWire => {

@@ -98,8 +98,8 @@ impl GolemBackend {
         ]);
         let vertices = draw_list.vertices();
         let indices = draw_list.indices();
-        self.vb.set_data(&vertices);
-        self.eb.set_data(&indices);
+        self.vb.set_data(vertices);
+        self.eb.set_data(indices);
         self.shader.prepare_draw(&self.vb, &self.eb)?;
         self.shader.set_uniform("projection", projection)?;
         self.shader.set_uniform("tex", UniformValue::Int(1))?;

@@ -12,10 +12,11 @@ pub struct Font {
     glyphs: HashMap<char, Glyph>,
 }
 
+type GlyphData = Vec<((f32, f32), (f32, f32))>;
+
 impl Font {
     fn load(json: &[u8], advance: f32) -> Self {
-        let glyphs: HashMap<char, Vec<((f32, f32), (f32, f32))>> =
-            serde_json::from_slice(FONT_JSON).unwrap();
+        let glyphs: HashMap<char, GlyphData> = serde_json::from_slice(json).unwrap();
         let glyphs = glyphs
             .into_iter()
             .map(|(char, segments)| {

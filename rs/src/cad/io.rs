@@ -15,7 +15,9 @@ pub struct Io {
 pub enum Event {
     Keydown(String),
     Keyup(String),
+    #[allow(dead_code)]
     MouseDown(u8),
+    #[allow(dead_code)]
     MouseUp(u8),
     Click(u8),
     DoubleClick(u8),
