@@ -62,7 +62,7 @@ export const App: React.FC = () => {
     zsCadRef.current!.stopSimulation();
   };
   return (
-    <div className="flex flex-col w-full h-full">
+    <div className="flex flex-col flex-none w-full h-full">
       <Navbar>
         <Navbar.Group align={Alignment.LEFT}>
           <Navbar.Heading>Zuse</Navbar.Heading>
@@ -145,7 +145,7 @@ export const App: React.FC = () => {
         </Navbar.Group>
       </Navbar>
       <ZsCad ref={zsCadRef} />
-      <div className="p-1 bg-white text-right">
+      <div className="flex-none p-1 bg-white text-right">
         Made by <a href="https://koba789.com">KOBA789</a>
       </div>
     </div>

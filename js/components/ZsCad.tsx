@@ -11,6 +11,7 @@ export type Handler = {
 export type ZsCadProps = {};
 
 export const ZsCad = forwardRef<Handler, ZsCadProps>(({}, ref) => {
+  const wrapper = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [zsSch, setZsSch] = useState(null as Cad | null);
   useImperativeHandle(ref, () => {
@@ -58,8 +59,8 @@ export const ZsCad = forwardRef<Handler, ZsCadProps>(({}, ref) => {
           zsSch.free();
           return;
         }
-        const width = canvas.current!.clientWidth;
-        const height = canvas.current!.clientHeight;
+        const width = wrapper.current!.clientWidth;
+        const height = wrapper.current!.clientHeight;
         canvas.current!.width = width * window.devicePixelRatio;
         canvas.current!.height = height * window.devicePixelRatio;
         //canvas.current!.style.width = `${width}px`;
@@ -142,5 +143,7 @@ export const ZsCad = forwardRef<Handler, ZsCadProps>(({}, ref) => {
       currentCanvas.removeEventListener("keydown", onKeyDown);
     };
   }, []);
-  return <canvas ref={canvas} tabIndex={0} className="w-full h-full block" />;
+  return <div ref={wrapper} className="flex-grow overflow-hidden w-full h-full">
+    <canvas ref={canvas} tabIndex={0} className="block" />
+  </div>;
 });
