@@ -145,7 +145,7 @@ export const App: React.FC = () => {
         </Navbar.Group>
       </Navbar>
       <ZsCad ref={zsCadRef} />
-      <div className="flex-none p-1 bg-white text-right">
+      <div className="flex-none p-1 bg-white text-right select-none">
         Made by <a href="https://koba789.com">KOBA789</a>
       </div>
     </div>
