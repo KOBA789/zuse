@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 use nalgebra::Vector2;
-use rstar::{AABB, RTree, RTreeObject, primitives::{Line, PointWithData}};
+use rstar::{AABB, RTree, RTreeObject, primitives::{GeomWithData, Line}};
 use serde::{Deserialize, Serialize};
 
 use crate::symbol;
@@ -171,7 +171,7 @@ impl Wire for WireV {
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct Junctions {
-    rtree: RTree<PointWithData<u8, [i32; 2]>>,
+    rtree: RTree<GeomWithData<[i32; 2], u8>>,
 }
 
 impl Junctions {
@@ -180,7 +180,7 @@ impl Junctions {
             j.data += by;
             j.data
         } else {
-            self.rtree.insert(PointWithData::new(by, p));
+            self.rtree.insert(GeomWithData::new(p, by));
             1
         }
     }
@@ -358,7 +358,7 @@ impl State {
             .junctions
             .rtree
             .locate_in_envelope_intersecting(&new_wire.aabb())
-            .map(|p| p.position()[W::Axis::PARA_AXIS])
+            .map(|p| p.geom()[W::Axis::PARA_AXIS])
             .sorted();
         let vertices = std::iter::once(start)
             .chain(junctions)
@@ -523,7 +523,7 @@ impl State {
         self.junctions
             .rtree
             .locate_in_envelope_intersecting(aabb)
-            .map(|p| (Vector2::from(*p.position()), p.data))
+            .map(|p| (Vector2::from(*p.geom()), p.data))
     }
 
     pub fn components_iter(&self, aabb: AABB<[i32; 2]>) -> impl Iterator<Item = &Component> {
