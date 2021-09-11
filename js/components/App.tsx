@@ -1,49 +1,20 @@
 /** @jsx jsx */
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { jsx, css } from "@emotion/react";
 import {
   Alignment,
   Button,
-  Colors,
+  Classes,
+  Dialog,
   FocusStyleManager,
+  Icon,
   Navbar,
-  NavbarGroup,
 } from "@blueprintjs/core";
 import { IconNames } from "@blueprintjs/icons";
 import { Handler, ZsCad } from "./ZsCad";
 
 FocusStyleManager.onlyShowFocusOnTabs();
-
-const sidePaneStyle = css`
-  background-color: ${Colors.WHITE};
-  width: 300px;
-  padding: 18px 12px;
-`;
-const SidePane: React.FC = ({ children }) => (
-  <div css={sidePaneStyle}>{children}</div>
-);
-
-const mainPaneStyle = css`
-  flex: 1 1 auto;
-`;
-const MainPane: React.FC = ({ children }) => (
-  <div css={mainPaneStyle}>{children}</div>
-);
-
-const sideBySideStyle = css`
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  flex: 1 0 auto;
-`;
-const SideBySide: React.FC = ({ children }) => (
-  <div css={sideBySideStyle}>{children}</div>
-);
-
-const navbarGroupStyle = css`
-  justify-content: center;
-`;
 
 const appStyle = css`
   height: 100%;
@@ -53,12 +24,13 @@ const appStyle = css`
 `;
 
 export const App: React.FC = () => {
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const zsCadRef = useRef(null as Handler | null);
   const handleDownloadClick = () => {
-    const blob = new Blob([
-      zsCadRef.current!.saveSchematic()
-    ], { type : 'application/json' });
-    const objectUrl = URL.createObjectURL(blob);;
+    const blob = new Blob([zsCadRef.current!.saveSchematic()], {
+      type: "application/json",
+    });
+    const objectUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.download = "schematic.zse";
     a.href = objectUrl;
@@ -71,11 +43,15 @@ export const App: React.FC = () => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".zse";
-    input.addEventListener("change", async (event) => {
-      const data = await (event.target as HTMLInputElement).files![0].text();
-      zsCadRef.current!.loadSchematic(data);
-      input.remove();
-    }, false);
+    input.addEventListener(
+      "change",
+      async (event) => {
+        const data = await (event.target as HTMLInputElement).files![0].text();
+        zsCadRef.current!.loadSchematic(data);
+        input.remove();
+      },
+      false
+    );
     document.body.appendChild(input);
     input.click();
   };
@@ -86,30 +62,92 @@ export const App: React.FC = () => {
     zsCadRef.current!.stopSimulation();
   };
   return (
-    <div css={appStyle}>
+    <div className="flex flex-col w-full h-full">
       <Navbar>
-        <NavbarGroup align={Alignment.LEFT} css={navbarGroupStyle}>
-        <Button minimal large icon={IconNames.DOWNLOAD} onClick={handleDownloadClick}/>
-        <Button minimal large icon={IconNames.DOCUMENT_OPEN} onClick={handleOpenClick}/>
-        </NavbarGroup>
-        <NavbarGroup align={Alignment.CENTER} css={navbarGroupStyle}>
-          {/*
-          <Button minimal large icon={IconNames.SELECT} />
-          <Button minimal large icon={IconNames.MINUS} />
-          <Button minimal large icon={IconNames.DOT} />
-          <Button minimal large icon={IconNames.CIRCLE} />
-          <Button minimal large icon={IconNames.KEY_OPTION} />
-          <Button minimal large icon={IconNames.SYMBOL_TRIANGLE_UP} />*/}
-          <Button minimal large icon={IconNames.PLAY} onClick={handleStartSimulation} />
-          <Button minimal large icon={IconNames.STOP} onClick={handleStopSimulation} />
-        </NavbarGroup>
+        <Navbar.Group align={Alignment.LEFT}>
+          <Navbar.Heading>Zuse</Navbar.Heading>
+          <Button
+            minimal
+            large
+            icon={IconNames.DOWNLOAD}
+            onClick={handleDownloadClick}
+          />
+          <Button
+            minimal
+            large
+            icon={IconNames.DOCUMENT_OPEN}
+            onClick={handleOpenClick}
+          />
+        </Navbar.Group>
+        <Navbar.Group align={Alignment.CENTER} className="justify-center">
+          <Button
+            minimal
+            large
+            icon={IconNames.PLAY}
+            onClick={handleStartSimulation}
+          />
+          <Button
+            minimal
+            large
+            icon={IconNames.STOP}
+            onClick={handleStopSimulation}
+          />
+          <Navbar.Divider />
+          <Button
+            minimal
+            large
+            icon={IconNames.HELP}
+            onClick={() => setIsHelpOpen(true)}
+          />
+          <Dialog
+            canEscapeKeyClose
+            canOutsideClickClose
+            hasBackdrop
+            isCloseButtonShown
+            title="Help"
+            icon={IconNames.HELP}
+            isOpen={isHelpOpen}
+            onClose={() => setIsHelpOpen(false)}
+          >
+            <div className={Classes.DIALOG_BODY}>
+              <dl>
+                <dt>Key W</dt>
+                <dd>
+                  <strong>W</strong>iring
+                </dd>
+                <dt>Key C</dt>
+                <dd>
+                  Relay <strong>C</strong>oil
+                </dd>
+                <dt>Key S</dt>
+                <dd>
+                  <strong>S</strong>witch
+                </dd>
+                <dt>Key P</dt>
+                <dd>
+                  <strong>P</strong>ower Source
+                </dd>
+                <dt>Key R</dt>
+                <dd>
+                  <strong>R</strong>otate switch
+                </dd>
+                <dt>Key Y</dt>
+                <dd>Flip switch horizontally</dd>
+                <dt>Key D</dt>
+                <dd>
+                  <strong>D</strong>elete wires or components
+                </dd>
+                <dt>Double-click component</dt>
+                <dd>Change ID</dd>
+              </dl>
+            </div>
+          </Dialog>
+        </Navbar.Group>
       </Navbar>
-      <SideBySide>
-        <MainPane>
-          <ZsCad ref={zsCadRef} />
-        </MainPane>
-        <SidePane />
-      </SideBySide>
+      <ZsCad ref={zsCadRef} />
+      <div className="p-1 bg-white text-right">
+        Made by <a href="https://koba789.com">KOBA789</a>
+      </div>
     </div>
   );
 };

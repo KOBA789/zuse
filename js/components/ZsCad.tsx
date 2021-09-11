@@ -1,13 +1,5 @@
-/** @jsx jsx */
-import { css, jsx } from "@emotion/react";
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { Cad, ComponentMetadata, Io } from "../../rs/pkg";
-
-const zsCadStyle = css`
-  display: block;
-  width: 100%;
-  height: 100%;
-`;
 
 export type Handler = {
   saveSchematic: () => string,
@@ -150,5 +142,5 @@ export const ZsCad = forwardRef<Handler, ZsCadProps>(({}, ref) => {
       currentCanvas.removeEventListener("keydown", onKeyDown);
     };
   }, []);
-  return <canvas ref={canvas} css={zsCadStyle} tabIndex={0} />;
+  return <canvas ref={canvas} tabIndex={0} className="w-full h-full block" />;
 });
