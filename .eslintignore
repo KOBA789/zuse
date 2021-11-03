@@ -1,3 +1,2 @@
-node_modules/
-dist/
-rs/
+/dist/
+/crates/*/pkg
