@@ -609,7 +609,6 @@ impl Cad {
     }
     pub fn start_simulation(&mut self) {
         let netlist = self.sch_state.build_netlist();
-        web_sys::console::log_1(&serde_json::to_string(&netlist).unwrap().into());
         let spec = zuse_core::compile(&netlist);
         let mut circuit = spec.build();
         circuit.simulate();
