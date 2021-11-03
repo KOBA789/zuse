@@ -6,5 +6,6 @@
       "automerge": true
     }
   ],
-  "postUpdateOptions": ["yarnDedupeHighest"]
+  "postUpdateOptions": ["yarnDedupeHighest"],
+  "lockFileMaintenance": { "enabled": true }
 }
