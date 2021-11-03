@@ -23,7 +23,7 @@ serde_json = "1.0"
 zuse-core = { git = "https://github.com/koba789/zuse-core#593cdd052d956be9b2dc56e21de6419c0dbad532" }
 
 [dependencies.web-sys]
-version = "0.3.53"
+version = "0.3.55"
 features = [
   'console',
   'Document',
