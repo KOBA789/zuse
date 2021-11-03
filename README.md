@@ -24,8 +24,10 @@ Use `yarn build`. It puts artifacts in `dist/`.
 ## Resources
 
 ### Talk
-- [［Mar 20］Kernel/VM探検隊online part2 - YouTube](https://www.youtube.com/watch?v=brrm328XItM&t=2627)
+
+- [［Mar 20］Kernel/VM 探検隊 online part2 - YouTube](https://www.youtube.com/watch?v=brrm328XItM&t=2627)
 
 ### Articles
-- [小学生時代に秋月電子で買った300個の電磁リレー　半導体以外でも作れる自作CPU　 - ログミーTech](https://logmi.jp/tech/articles/325262)
-- [Rust・WebAssembly・WebGLで作る回路シミュレータ　CADに書いたCPUの回路図がそのまま動く - ログミーTech](https://logmi.jp/tech/articles/325310)
+
+- [小学生時代に秋月電子で買った 300 個の電磁リレー　半導体以外でも作れる自作 CPU 　 - ログミー Tech](https://logmi.jp/tech/articles/325262)
+- [Rust・WebAssembly・WebGL で作る回路シミュレータ　 CAD に書いた CPU の回路図がそのまま動く - ログミー Tech](https://logmi.jp/tech/articles/325310)

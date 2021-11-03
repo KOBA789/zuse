@@ -1,16 +1,27 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import init, { Cad, ComponentMetadata, GolemBackend, Io } from "@crate/zuse-rs/pkg";
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
+import init, {
+  Cad,
+  ComponentMetadata,
+  GolemBackend,
+  Io,
+} from "@crate/zuse-rs/pkg";
 
 export type Handler = {
-  saveSchematic: () => string,
-  loadSchematic: (zse: string) => void,
-  startSimulation: () => void,
-  stopSimulation: () => void,
+  saveSchematic: () => string;
+  loadSchematic: (zse: string) => void;
+  startSimulation: () => void;
+  stopSimulation: () => void;
 };
 
 export type ZsCadProps = {};
 
-export const ZsCad = forwardRef<Handler, ZsCadProps>(({}, ref) => {
+export const ZsCad = forwardRef<Handler, ZsCadProps>((_, ref) => {
   const wrapper = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [zsSch, setZsSch] = useState(null as Cad | null);
@@ -143,7 +154,10 @@ export const ZsCad = forwardRef<Handler, ZsCadProps>(({}, ref) => {
       currentCanvas.removeEventListener("keydown", onKeyDown);
     };
   }, []);
-  return <div ref={wrapper} className="flex-grow overflow-hidden w-full h-full">
-    <canvas ref={canvas} tabIndex={0} className="block" />
-  </div>;
+  return (
+    <div ref={wrapper} className="flex-grow overflow-hidden w-full h-full">
+      <canvas ref={canvas} tabIndex={0} className="block" />
+    </div>
+  );
 });
+ZsCad.displayName = "ZsCad";
