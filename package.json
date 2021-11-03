@@ -13,6 +13,7 @@
     "build:crates": "run-s crates:*",
     "build:vite": "vite build",
     "build": "run-s build:crates build:vite",
+    "debug": "echo $WASM_PACK_PATH",
     "typecheck": "tsc",
     "lint:prettier": "prettier . --check",
     "lint:eslint": "eslint . --format friendly",
