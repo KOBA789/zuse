@@ -1,4 +1,7 @@
+/** @jsx jsx */
+
 import React, { useRef, useState } from "react";
+import { jsx, css } from "@emotion/react";
 import {
   Alignment,
   Button,
@@ -12,6 +15,13 @@ import { IconNames } from "@blueprintjs/icons";
 import { Handler, ZsCad } from "./ZsCad";
 
 FocusStyleManager.onlyShowFocusOnTabs();
+
+const appStyle = css`
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+`;
 
 export const App: React.FC = () => {
   const [isHelpOpen, setIsHelpOpen] = useState(false);

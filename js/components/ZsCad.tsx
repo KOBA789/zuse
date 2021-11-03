@@ -1,5 +1,5 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import init, { Cad, ComponentMetadata, GolemBackend, Io } from "@crate/zuse-rs/pkg";
+import type { Cad, ComponentMetadata, Io } from "../../rs/pkg";
 
 export type Handler = {
   saveSchematic: () => string,
@@ -46,7 +46,7 @@ export const ZsCad = forwardRef<Handler, ZsCadProps>(({}, ref) => {
     const webgl = canvas.current!.getContext("webgl")!;
     let isUnmounted = false;
     let io: Io | null = null;
-    init().then(() => {
+    import("../../rs/pkg").then(({ GolemBackend, Cad, Io }) => {
       if (isUnmounted) {
         return;
       }
