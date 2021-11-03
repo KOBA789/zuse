@@ -20,7 +20,8 @@
     "fix:prettier": "yarn lint:prettier --write",
     "fix:eslint": "yarn lint:eslint --fix",
     "fix": "run-s fix:eslint fix:prettier",
-    "serve": "darkhttpd dist --port 8080 --default-mimetype application/wasm"
+    "serve": "darkhttpd dist --port 8080 --default-mimetype application/wasm",
+    "install:wasm-pack": "yarn global add wasm-pack"
   },
   "devDependencies": {
     "@types/papaparse": "5.3.1",
