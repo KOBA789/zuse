@@ -3,6 +3,7 @@
   "packageRules": [
     {
       "updateTypes": ["minor", "patch"],
+      "groupName": "non-major deps",
       "automerge": true
     }
   ],
