@@ -8,5 +8,6 @@
     }
   ],
   "postUpdateOptions": ["yarnDedupeHighest"],
-  "lockFileMaintenance": { "enabled": true }
+  "lockFileMaintenance": { "enabled": true },
+  "ignoreDeps": ["glow"]
 }
