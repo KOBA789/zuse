@@ -3,5 +3,8 @@
   "rust-analyzer.diagnostics.disabled": [
     "missing-unsafe",
     "mismatched-arg-count"
+  ],
+  "rust-analyzer.linkedProjects": [
+    "crates/zuse-rs/Cargo.toml"
   ]
 }

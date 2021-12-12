@@ -3,7 +3,7 @@ mod io;
 
 use crate::symbol;
 
-use super::backend::GolemBackend;
+use super::backend::GlowBackend;
 use super::font::FONT;
 use super::schematic;
 pub use draw_list::{Color, DrawCmd, DrawList};
@@ -13,7 +13,7 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct Cad {
-    backend: GolemBackend,
+    backend: GlowBackend,
     transform: Transform,
     grid_size: u32,
     draw_list: DrawList,
@@ -128,7 +128,7 @@ fn ord(v1: i32, v2: i32) -> (i32, i32) {
 #[wasm_bindgen]
 impl Cad {
     #[wasm_bindgen(constructor)]
-    pub fn new(backend: GolemBackend) -> Self {
+    pub fn new(backend: GlowBackend) -> Self {
         let draw_list = DrawList::new(Vector2::new(0, 0));
         Self {
             backend,

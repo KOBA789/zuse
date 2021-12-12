@@ -4,7 +4,7 @@ mod cad;
 mod symbol;
 mod font;
 pub use cad::{Cad, Io};
-pub use backend::GolemBackend;
+pub use backend::GlowBackend;
 
 #[macro_export]
 macro_rules! log {

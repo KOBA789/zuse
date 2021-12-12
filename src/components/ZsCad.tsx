@@ -8,7 +8,7 @@ import React, {
 import init, {
   Cad,
   ComponentMetadata,
-  GolemBackend,
+  GlowBackend,
   Io,
 } from "@crate/zuse-rs/pkg";
 
@@ -54,14 +54,14 @@ export const ZsCad = forwardRef<Handler, ZsCadProps>((_, ref) => {
     };
   });
   useEffect(() => {
-    const webgl = canvas.current!.getContext("webgl")!;
+    const webgl = canvas.current!.getContext("webgl2")!;
     let isUnmounted = false;
     let io: Io | null = null;
     init().then(() => {
       if (isUnmounted) {
         return;
       }
-      const backend = new GolemBackend(webgl);
+      const backend = new GlowBackend(webgl);
       io = new Io();
       const zsSch = new Cad(backend);
       setZsSch(zsSch);

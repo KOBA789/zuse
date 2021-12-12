@@ -12,6 +12,7 @@ wasm-opt = false
 crate-type = ["cdylib"]
 
 [dependencies]
+anyhow = "1"
 serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { version = "0.2.78", features = ["serde-serialize"] }
 js-sys = "0.3.55"
@@ -21,6 +22,7 @@ itertools = "0.10"
 lazy_static = "1.4"
 serde_json = "1.0"
 zuse-core = { git = "https://github.com/koba789/zuse-core#593cdd052d956be9b2dc56e21de6419c0dbad532" }
+bytemuck = "1.7"
 
 [dependencies.web-sys]
 version = "0.3.55"
@@ -36,13 +38,8 @@ features = [
   'Window',
 ]
 
-[dependencies.golem]
-version = "0.1.7"
-features = ['web-sys']
-
 [dependencies.glow]
-version = "0.4.0"
-features = ['web-sys']
+version = "0.11.0"
 
 [profile.dev]
 opt-level = 1
