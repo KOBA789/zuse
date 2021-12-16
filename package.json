@@ -40,7 +40,7 @@
     "postcss": "8.4.5",
     "prettier": "2.5.1",
     "typescript": "4.5.4",
-    "vite": "2.7.2"
+    "vite": "2.7.3"
   },
   "dependencies": {
     "@blueprintjs/core": "3.52.0",
