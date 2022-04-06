@@ -9,5 +9,8 @@
   ],
   "postUpdateOptions": ["yarnDedupeHighest"],
   "lockFileMaintenance": { "enabled": true },
-  "ignoreDeps": ["glow"]
+  "ignoreDeps": ["glow"],
+  "schedule": [
+    "after 1:00am on Saturday"
+  ]
 }
