@@ -43,7 +43,7 @@
     "vite": "2.9.12"
   },
   "dependencies": {
-    "@blueprintjs/core": "3.54.0",
+    "@blueprintjs/core": "4.5.0",
     "@blueprintjs/icons": "3.33.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
