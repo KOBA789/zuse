@@ -214,18 +214,18 @@
     "@babel/helper-validator-identifier" "^7.16.7"
     to-fast-properties "^2.0.0"
 
-"@blueprintjs/colors@^4.1.22":
-  version "4.1.22"
-  resolved "https://registry.yarnpkg.com/@blueprintjs/colors/-/colors-4.1.22.tgz#033cbf03705100d5114d54161c225eec5cfeacfb"
-  integrity sha512-qcC7nWW9TTSS7aDxE5gbo9vrxo+IOpC6/Kzpi0rdOBYFDd02PppCdnCCjGYw1/IopSsZ9EWqDLmD7zuy0H+WEA==
+"@blueprintjs/colors@^4.1.23":
+  version "4.1.23"
+  resolved "https://registry.yarnpkg.com/@blueprintjs/colors/-/colors-4.1.23.tgz#4facbe7610adcb3653f99b03b8dec0c6ac6c1372"
+  integrity sha512-XiocrpqUS6DCpjFsDAtbwcETyuglwpOFCjon+Du4PZzQqafTrs+4p73H2EIZZJNQm1ajxSFQgmbhfrOFgAZXfA==
 
-"@blueprintjs/core@4.19.0":
-  version "4.19.0"
-  resolved "https://registry.yarnpkg.com/@blueprintjs/core/-/core-4.19.0.tgz#96d030cb4a784024cef5ba3985b0cb11c4dcbd47"
-  integrity sha512-LmEbLVUauVTNnnR9/H2Xdc+5GPXvDD/qYS1k0003Q6MlWP3RMjboquU+nEptPPu5zsySnLTKow5jXQ/Y4XDhUA==
+"@blueprintjs/core@4.19.2":
+  version "4.19.2"
+  resolved "https://registry.yarnpkg.com/@blueprintjs/core/-/core-4.19.2.tgz#830e6438ce632c068be278b84eeae3f5744b46f8"
+  integrity sha512-wnr35rR5M9eFUfFKZCmE7xAJ0R0wTcRU8qKXmQb4c/KKQdIqv0mFDuh4c8p/uTtR3YmdYEYLChCBTTA4idkawQ==
   dependencies:
-    "@blueprintjs/colors" "^4.1.22"
-    "@blueprintjs/icons" "^4.15.0"
+    "@blueprintjs/colors" "^4.1.23"
+    "@blueprintjs/icons" "^4.15.1"
     "@juggle/resize-observer" "^3.4.0"
     "@types/dom4" "^2.0.2"
     classnames "^2.3.1"
@@ -236,10 +236,10 @@
     react-transition-group "^4.4.5"
     tslib "~2.5.0"
 
-"@blueprintjs/icons@4.15.0", "@blueprintjs/icons@^4.15.0":
-  version "4.15.0"
-  resolved "https://registry.yarnpkg.com/@blueprintjs/icons/-/icons-4.15.0.tgz#f7e26f19c882a96f611f0874d1e159f7b55bdd91"
-  integrity sha512-h8+y4iXjpHsLE/7NU9GNhxnPyiYXgJPyJ/NmushtmcVrFn9tT5HlEc1+5bmxqv4osROQLyWJ9U5gDKu1rF72Ag==
+"@blueprintjs/icons@4.15.1", "@blueprintjs/icons@^4.15.1":
+  version "4.15.1"
+  resolved "https://registry.yarnpkg.com/@blueprintjs/icons/-/icons-4.15.1.tgz#ffa04e0e28cad4f35d5bfb3c164ecc8fff1d758e"
+  integrity sha512-gmZfPXTrLVNdiAWD0FoJRQnKW94E7vsZ1zKP+31TOfjuMkRDxAcSFhLRdLZ3VF7U5KlO9VBXGQ/MGg4pzfX8pA==
   dependencies:
     change-case "^4.1.2"
     classnames "^2.3.1"
@@ -272,10 +272,10 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@eslint/js@8.40.0":
-  version "8.40.0"
-  resolved "https://registry.yarnpkg.com/@eslint/js/-/js-8.40.0.tgz#3ba73359e11f5a7bd3e407f70b3528abfae69cec"
-  integrity sha512-ElyB54bJIhXQYVKjDSvCkPO1iU1tSAeVQJbllWJq1XQSmmA4dgFk8CbiBGpiOPxleE48vDogxCtmMYku4HSVLA==
+"@eslint/js@8.41.0":
+  version "8.41.0"
+  resolved "https://registry.yarnpkg.com/@eslint/js/-/js-8.41.0.tgz#080321c3b68253522f7646b55b577dd99d2950b3"
+  integrity sha512-LxcyMGxwmTh2lY9FwHPGWOHmYFCZvbrFCBZL4FzSSsxsRPuhrYUg/49/0KDfW8tnIEaEHtfmn6+NPN+1DqaNmA==
 
 "@humanwhocodes/config-array@^0.11.8":
   version "0.11.8"
@@ -1187,15 +1187,15 @@ eslint-visitor-keys@^3.3.0, eslint-visitor-keys@^3.4.1:
   resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-3.4.1.tgz#c22c48f48942d08ca824cc526211ae400478a994"
   integrity sha512-pZnmmLwYzf+kWaM/Qgrvpen51upAktaaiI01nsJD/Yr3lMOdNtq0cxkrrg16w64VtisN6okbs7Q8AfGqj4c9fA==
 
-eslint@8.40.0:
-  version "8.40.0"
-  resolved "https://registry.yarnpkg.com/eslint/-/eslint-8.40.0.tgz#a564cd0099f38542c4e9a2f630fa45bf33bc42a4"
-  integrity sha512-bvR+TsP9EHL3TqNtj9sCNJVAFK3fBN8Q7g5waghxyRsPLIMwL73XSKnZFK0hk/O2ANC+iAoq6PWMQ+IfBAJIiQ==
+eslint@8.41.0:
+  version "8.41.0"
+  resolved "https://registry.yarnpkg.com/eslint/-/eslint-8.41.0.tgz#3062ca73363b4714b16dbc1e60f035e6134b6f1c"
+  integrity sha512-WQDQpzGBOP5IrXPo4Hc0814r4/v2rrIsB0rhT7jtunIalgg6gYXWhRMOejVO8yH21T/FGaxjmFjBMNqcIlmH1Q==
   dependencies:
     "@eslint-community/eslint-utils" "^4.2.0"
     "@eslint-community/regexpp" "^4.4.0"
     "@eslint/eslintrc" "^2.0.3"
-    "@eslint/js" "8.40.0"
+    "@eslint/js" "8.41.0"
     "@humanwhocodes/config-array" "^0.11.8"
     "@humanwhocodes/module-importer" "^1.0.1"
     "@nodelib/fs.walk" "^1.2.8"
@@ -1215,13 +1215,12 @@ eslint@8.40.0:
     find-up "^5.0.0"
     glob-parent "^6.0.2"
     globals "^13.19.0"
-    grapheme-splitter "^1.0.4"
+    graphemer "^1.4.0"
     ignore "^5.2.0"
     import-fresh "^3.0.0"
     imurmurhash "^0.1.4"
     is-glob "^4.0.0"
     is-path-inside "^3.0.3"
-    js-sdsl "^4.1.4"
     js-yaml "^4.1.0"
     json-stable-stringify-without-jsonify "^1.0.1"
     levn "^0.4.1"
@@ -1473,6 +1472,11 @@ grapheme-splitter@^1.0.4:
   resolved "https://registry.yarnpkg.com/grapheme-splitter/-/grapheme-splitter-1.0.4.tgz#9cf3a665c6247479896834af35cf1dbb4400767e"
   integrity sha512-bzh50DW9kTPM00T8y4o8vQg89Di9oLJVLW/KaOGIXJWP/iqCN6WKYkbNOF04vFLJhwcpYUh9ydh/+5vpOqV4YQ==
 
+graphemer@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/graphemer/-/graphemer-1.4.0.tgz#fb2f1d55e0e3a1849aeffc90c4fa0dd53a0e66c6"
+  integrity sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==
+
 gud@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/gud/-/gud-1.0.0.tgz#a489581b17e6a70beca9abe3ae57de7a499852c0"
@@ -1705,11 +1709,6 @@ jiti@^1.18.2:
   version "1.18.2"
   resolved "https://registry.yarnpkg.com/jiti/-/jiti-1.18.2.tgz#80c3ef3d486ebf2450d9335122b32d121f2a83cd"
   integrity sha512-QAdOptna2NYiSSpv0O/BwoHBSmz4YhpzJHyi+fnMRTXFjp7B8i/YG5Z8IfusxB1ufjcD2Sre1F3R+nX3fvy7gg==
-
-js-sdsl@^4.1.4:
-  version "4.1.4"
-  resolved "https://registry.yarnpkg.com/js-sdsl/-/js-sdsl-4.1.4.tgz#78793c90f80e8430b7d8dc94515b6c77d98a26a6"
-  integrity sha512-Y2/yD55y5jteOAmY50JbUZYwk3CP3wnLPEZnlR1w9oKhITrBEtAxwuWKebFf8hMrPMgbYwFoWK/lH2sBkErELw==
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
