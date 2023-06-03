@@ -17,7 +17,7 @@ serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { version = "0.2.86", features = ["serde-serialize"] }
 js-sys = "0.3.63"
 nalgebra = { version = "0.32", features = ["serde-serialize"] }
-rstar = { version = "0.10", features = ["serde"] }
+rstar = { version = "0.11", features = ["serde"] }
 itertools = "0.10"
 lazy_static = "1.4"
 serde_json = "1.0"
