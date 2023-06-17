@@ -14,8 +14,8 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = "1"
 serde = { version = "1.0", features = ["derive"] }
-wasm-bindgen = { version = "0.2.86", features = ["serde-serialize"] }
-js-sys = "0.3.63"
+wasm-bindgen = { version = "0.2.87", features = ["serde-serialize"] }
+js-sys = "0.3.64"
 nalgebra = { version = "0.32", features = ["serde-serialize"] }
 rstar = { version = "0.11", features = ["serde"] }
 itertools = "0.10"
@@ -25,7 +25,7 @@ zuse-core = { git = "https://github.com/koba789/zuse-core#593cdd052d956be9b2dc56
 bytemuck = "1.13"
 
 [dependencies.web-sys]
-version = "0.3.63"
+version = "0.3.64"
 features = [
   'console',
   'Document',
