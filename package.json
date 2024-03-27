@@ -24,17 +24,17 @@
     "install:wasm-pack": "yarn global add wasm-pack"
   },
   "devDependencies": {
-    "@types/papaparse": "5.3.8",
-    "@types/react": "18.2.21",
-    "@types/react-dom": "18.2.7",
+    "@types/papaparse": "5.3.14",
+    "@types/react": "18.2.73",
+    "@types/react-dom": "18.2.22",
     "@typescript-eslint/eslint-plugin": "5.62.0",
     "@typescript-eslint/parser": "5.62.0",
     "@vitejs/plugin-react-refresh": "1.3.6",
-    "autoprefixer": "10.4.15",
-    "eslint": "8.49.0",
+    "autoprefixer": "10.4.19",
+    "eslint": "8.57.0",
     "eslint-config-prettier": "8.10.0",
     "eslint-config-react": "1.1.7",
-    "eslint-plugin-react": "7.33.2",
+    "eslint-plugin-react": "7.34.1",
     "eslint-plugin-react-hooks": "4.6.0",
     "npm-run-all": "4.1.5",
     "postcss": "8.4.29",
@@ -47,6 +47,6 @@
     "@blueprintjs/icons": "4.16.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "tailwindcss": "3.3.3"
+    "tailwindcss": "3.4.3"
   }
 }
