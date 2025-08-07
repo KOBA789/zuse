@@ -147,8 +147,8 @@ impl Cad {
         let pan = -io.wheel;
         let origin = io.mouse;
         let mut zoom = 1. - io.wheel_pinch * 0.02;
-        if self.transform.scale * zoom < 0.1 {
-            zoom = 0.1 / self.transform.scale;
+        if self.transform.scale * zoom < 0.01 {
+            zoom = 0.01 / self.transform.scale;
         } else if self.transform.scale * zoom > 16.0 {
             zoom = 16.0 / self.transform.scale;
         }
